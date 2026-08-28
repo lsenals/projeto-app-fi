@@ -16,6 +16,7 @@ dist/
 # Environment / secrets
 *.env
 .env
+!.env.example
 
 # VS Code (mantemos launch.json e settings.json versionados, ignoramos só o resto)
 .vscode/*
@@ -34,3 +35,9 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Distribution / packaging (editable install)
+src/*.egg-info/
+
+# Saída de ferramentas de análise (graphify, etc.) — o repo é só código
+graphify-out/
