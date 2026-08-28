@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "app-fi"
+version = "0.1.0"
+description = "App financeiro pessoal em Python + Flet"
+readme = "README.md"
+requires-python = ">=3.13"
+license = { file = "LICENSE" }
+
+# Apenas dependências diretas (o que o código realmente importa).
+# O pip resolve as transitivas (anyio, httpx, etc.) sozinho.
+dependencies = [
+    "flet==0.86.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

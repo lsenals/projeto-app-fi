@@ -23,7 +23,8 @@ projeto-app-fi/
 │   └── data/         → persistência (arquivos locais, banco embutido, etc.)
 ├── tests/            → testes (pytest)
 ├── .vscode/          → settings.json + launch.json versionados
-└── requirements.txt
+├── pyproject.toml    → metadados do pacote + dependências diretas + config do pytest
+└── requirements.txt  → só a dep direta (flet); pyproject.toml é a fonte de verdade
 ```
 
 Regra geral: **`ui/` nunca deve conter lógica financeira** — telas só chamam funções de
@@ -35,14 +36,18 @@ Regra geral: **`ui/` nunca deve conter lógica financeira** — telas só chamam
 # ativar o venv (PowerShell)
 .venv\Scripts\Activate.ps1
 
+# instalar o projeto em modo editável (uma vez, e após mudar dependências)
+pip install -e ".[dev]"
+
 # rodar o app (modo desktop, mais rápido para desenvolver)
 python src/app_fi/main.py
 
 # rodar testes
 pytest
 
-# atualizar requirements.txt após instalar algo novo
-pip freeze > requirements.txt
+# adicionar uma dependência nova: editar `dependencies` no pyproject.toml,
+# refletir no requirements.txt e reinstalar
+pip install -e ".[dev]"
 ```
 
 ## Convenções
@@ -52,8 +57,9 @@ pip freeze > requirements.txt
 - Nomes de variáveis monetárias sempre explícitos sobre a unidade (`valor_reais`, não
   `valor`) — evita bugs de casas decimais/moeda mais adiante.
 - Sem dependências novas sem necessidade clara — cada pacote a mais é peso extra para
-  empacotar no mobile depois.
-- Commits pequenos e descritivos; não commitar `.venv/`, `__pycache__/`, nem builds.
+  empacotar no mobile depois. Declarar em `pyproject.toml` (`dependencies`), não só instalar.
+- Commits pequenos e descritivos; não commitar `.venv/`, `__pycache__/`, builds, nem
+  saída de ferramentas de análise (`graphify-out/`).
 
 ## Relação com o vault do Obsidian
 
