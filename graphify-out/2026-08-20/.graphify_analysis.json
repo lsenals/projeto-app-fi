@@ -1,0 +1,47 @@
+{
+  "communities": {
+    "0": [
+      "page",
+      "src_app_fi_main",
+      "src_app_fi_main_main"
+    ],
+    "1": [
+      "src_app_fi_core_init"
+    ],
+    "2": [
+      "src_app_fi_data_init"
+    ],
+    "3": [
+      "src_app_fi_init"
+    ],
+    "4": [
+      "src_app_fi_ui_init"
+    ],
+    "5": [
+      "tests_init"
+    ]
+  },
+  "cohesion": {
+    "0": 0.6666666666666666,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0
+  },
+  "gods": [
+    {
+      "id": "src_app_fi_main_main",
+      "label": "main()",
+      "degree": 2
+    }
+  ],
+  "surprises": [],
+  "questions": [
+    {
+      "type": "no_signal",
+      "question": null,
+      "why": "Not enough signal to generate questions. This usually means the corpus has no AMBIGUOUS edges, no bridge nodes, no INFERRED relationships, and all communities are tightly cohesive. Add more files or run with --mode deep to extract richer edges."
+    }
+  ]
+}

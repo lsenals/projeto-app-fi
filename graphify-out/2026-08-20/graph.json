@@ -1,0 +1,123 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "id": "src_app_fi_main_main",
+      "label": "main()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "main",
+      "file_type": "code",
+      "norm_label": "main()",
+      "source_file": "src/app_fi/main.py",
+      "source_location": "L4"
+    },
+    {
+      "id": "page",
+      "label": "Page",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "main",
+      "file_type": "code",
+      "norm_label": "page",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "src_app_fi_main",
+      "label": "main.py",
+      "_origin": "ast",
+      "community": 0,
+      "community_name": "main",
+      "file_type": "code",
+      "norm_label": "main.py",
+      "source_file": "src/app_fi/main.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_fi_core_init",
+      "label": "core/__init__.py",
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "core/__init__.py",
+      "file_type": "code",
+      "norm_label": "core/__init__.py",
+      "source_file": "src/app_fi/core/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_fi_data_init",
+      "label": "data/__init__.py",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "data/__init__.py",
+      "file_type": "code",
+      "norm_label": "data/__init__.py",
+      "source_file": "src/app_fi/data/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_fi_init",
+      "label": "app_fi/__init__.py",
+      "_origin": "ast",
+      "community": 3,
+      "community_name": "app_fi/__init__.py",
+      "file_type": "code",
+      "norm_label": "app_fi/__init__.py",
+      "source_file": "src/app_fi/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_app_fi_ui_init",
+      "label": "ui/__init__.py",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "ui/__init__.py",
+      "file_type": "code",
+      "norm_label": "ui/__init__.py",
+      "source_file": "src/app_fi/ui/__init__.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_init",
+      "label": "tests/__init__.py",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "tests/__init__.py",
+      "file_type": "code",
+      "norm_label": "tests/__init__.py",
+      "source_file": "tests/__init__.py",
+      "source_location": "L1"
+    }
+  ],
+  "links": [
+    {
+      "source": "src_app_fi_main_main",
+      "target": "page",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "src/app_fi/main.py",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "src_app_fi_main",
+      "target": "src_app_fi_main_main",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/app_fi/main.py",
+      "source_location": "L4",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "7cc11fe4aa4532c2ce1fbebe346db9b582173f9c"
+}

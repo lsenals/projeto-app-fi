@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flet: Run app_fi",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/app_fi/main.py",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
