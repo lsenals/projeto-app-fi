@@ -52,7 +52,7 @@ def main(page: ft.Page) -> None:
         page.update()
 
     def abrir_dialog(_) -> None:
-        valor = ft.TextField(label="Valor", prefix_text="R$ ", autofocus=True)
+        valor = ft.TextField(label="Valor (R$)", autofocus=True)
         cats = repo.list_categories(conn)
         categoria = ft.Dropdown(
             label="Categoria (opcional)",
