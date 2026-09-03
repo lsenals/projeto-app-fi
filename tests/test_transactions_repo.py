@@ -1,0 +1,51 @@
+import pytest
+
+from app_fi.core.summary import month_totals
+from app_fi.data import transactions_repo as repo
+from app_fi.data.db import get_db
+
+
+@pytest.fixture()
+def conn(tmp_path):
+    c = get_db(tmp_path / "t.db")
+    yield c
+    c.close()
+
+
+def test_add_expense_returns_id_and_appears_in_month(conn):
+    new_id = repo.add_expense(conn, date="2026-09-03", amount_cents=3490)
+    assert isinstance(new_id, int)
+
+    rows = repo.list_month(conn, 2026, 9)
+    assert len(rows) == 1
+    assert rows[0]["id"] == new_id
+    assert rows[0]["amount_cents"] == 3490
+    assert rows[0]["kind"] == "expense"
+    assert rows[0]["category_name"] is None  # sem categoria
+
+
+def test_add_expense_with_category_joins_name(conn):
+    cats = {c["name"]: c["id"] for c in repo.list_categories(conn)}
+    repo.add_expense(conn, date="2026-09-03", amount_cents=8000, category_id=cats["Alimentação"])
+    row = repo.list_month(conn, 2026, 9)[0]
+    assert row["category_name"] == "Alimentação"
+
+
+def test_list_month_filters_by_month(conn):
+    repo.add_expense(conn, date="2026-09-30", amount_cents=100)
+    repo.add_expense(conn, date="2026-10-01", amount_cents=200)
+    assert len(repo.list_month(conn, 2026, 9)) == 1
+    assert len(repo.list_month(conn, 2026, 10)) == 1
+
+
+def test_add_expense_rejects_non_positive(conn):
+    with pytest.raises(ValueError):
+        repo.add_expense(conn, date="2026-09-03", amount_cents=0)
+
+
+def test_repo_and_core_compose(conn):
+    repo.add_expense(conn, date="2026-09-01", amount_cents=5000)
+    repo.add_expense(conn, date="2026-09-15", amount_cents=2500)
+    totals = month_totals(repo.list_month(conn, 2026, 9))
+    assert totals.expense_cents == 7500
+    assert totals.balance_cents == -7500
