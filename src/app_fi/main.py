@@ -60,7 +60,12 @@ def main(page: ft.Page) -> None:
         kind = "expense"
         escolhido: dict[str, int | None] = {"expense": None, "income": None}
 
-        valor = ft.TextField(label="Valor (R$)", autofocus=True)
+        valor = ft.TextField(
+            label="Valor (R$)",
+            autofocus=True,
+            # bloqueia letras já na digitação: só dígitos, vírgula e ponto entram
+            input_filter=ft.InputFilter(regex_string=r"^[0-9.,]*$", allow=True),
+        )
         erro = ft.Text(color=ft.Colors.RED, visible=False)
         chips_label = ft.Text("Categoria (opcional)", size=12, color=ft.Colors.GREY)
         chips = ft.Row(wrap=True, spacing=6)
@@ -69,9 +74,6 @@ def main(page: ft.Page) -> None:
             atual = escolhido[kind]
             escolhido[kind] = None if atual == item_id else item_id
             montar_chips()
-            # o clique no chip roubou o foco; devolve ao valor para o Enter voltar a salvar
-            valor.focus()
-            page.update()
 
         def montar_chips() -> None:
             itens = (
@@ -133,9 +135,19 @@ def main(page: ft.Page) -> None:
                 montar_chips()
                 valor.focus()
             else:
-                page.pop_dialog()
+                fechar()
+
+        def fechar() -> None:
+            page.on_keyboard_event = None
+            page.pop_dialog()
+
+        def on_key(e: ft.KeyboardEvent) -> None:
+            # Enter salva mesmo quando o foco está num chip (o campo perde o on_submit)
+            if e.key == "Enter":
+                salvar(and_new=False)
 
         valor.on_submit = lambda e: salvar(and_new=False)
+        page.on_keyboard_event = on_key
         montar_chips()
 
         page.show_dialog(ft.AlertDialog(
@@ -155,8 +167,9 @@ def main(page: ft.Page) -> None:
                 chips,
                 erro,
             ], tight=True, width=360, spacing=10),
+            on_dismiss=lambda e: setattr(page, "on_keyboard_event", None),
             actions=[
-                ft.TextButton("Cancelar", on_click=lambda e: page.pop_dialog()),
+                ft.TextButton("Cancelar", on_click=lambda e: fechar()),
                 ft.TextButton("Salvar e novo", on_click=lambda e: salvar(and_new=True)),
                 ft.FilledButton("Salvar", on_click=lambda e: salvar(and_new=False)),
             ],
