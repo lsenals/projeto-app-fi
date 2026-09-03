@@ -69,6 +69,9 @@ def main(page: ft.Page) -> None:
             atual = escolhido[kind]
             escolhido[kind] = None if atual == item_id else item_id
             montar_chips()
+            # o clique no chip roubou o foco; devolve ao valor para o Enter voltar a salvar
+            valor.focus()
+            page.update()
 
         def montar_chips() -> None:
             itens = (
