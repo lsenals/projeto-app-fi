@@ -49,3 +49,28 @@ def test_repo_and_core_compose(conn):
     totals = month_totals(repo.list_month(conn, 2026, 9))
     assert totals.expense_cents == 7500
     assert totals.balance_cents == -7500
+
+
+def test_add_income_joins_source_name(conn):
+    sources = {s["name"]: s["id"] for s in repo.list_income_sources(conn)}
+    repo.add_income(conn, date="2026-09-05", amount_cents=840000,
+                    income_source_id=sources["Salário"])
+    row = repo.list_month(conn, 2026, 9)[0]
+    assert row["kind"] == "income"
+    assert row["income_source_name"] == "Salário"
+    assert row["category_name"] is None
+
+
+def test_add_income_requires_source(conn):
+    with pytest.raises(ValueError):
+        repo.add_income(conn, date="2026-09-05", amount_cents=1000, income_source_id=None)
+
+
+def test_income_and_expense_net_in_balance(conn):
+    src = repo.list_income_sources(conn)[0]["id"]
+    repo.add_income(conn, date="2026-09-01", amount_cents=500000, income_source_id=src)
+    repo.add_expense(conn, date="2026-09-02", amount_cents=120000)
+    totals = month_totals(repo.list_month(conn, 2026, 9))
+    assert totals.income_cents == 500000
+    assert totals.expense_cents == 120000
+    assert totals.balance_cents == 380000

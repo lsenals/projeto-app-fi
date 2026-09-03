@@ -27,7 +27,10 @@ def add_expense(
     note: str | None = None,
     status: str = "confirmed",
 ) -> int:
-    """Insere uma despesa e devolve o id. `date` no formato ISO 'YYYY-MM-DD'."""
+    """Insere uma despesa e devolve o id. `date` no formato ISO 'YYYY-MM-DD'.
+
+    Categoria é opcional (fica "Sem categoria").
+    """
     if amount_cents <= 0:
         raise ValueError("O valor deve ser maior que zero.")
     cur = conn.execute(
@@ -40,10 +43,36 @@ def add_expense(
     return int(cur.lastrowid)
 
 
+def add_income(
+    conn: sqlite3.Connection,
+    *,
+    date: str,
+    amount_cents: int,
+    income_source_id: int,
+    payee_id: int | None = None,
+    note: str | None = None,
+    status: str = "confirmed",
+) -> int:
+    """Insere uma receita e devolve o id. A origem (`income_source_id`) é obrigatória."""
+    if amount_cents <= 0:
+        raise ValueError("O valor deve ser maior que zero.")
+    if income_source_id is None:
+        raise ValueError("A receita precisa de uma origem.")
+    cur = conn.execute(
+        "INSERT INTO transactions "
+        "  (date, amount_cents, account_id, kind, status, income_source_id, payee_id, note) "
+        "VALUES (?, ?, ?, 'income', ?, ?, ?, ?)",
+        (date, amount_cents, _default_cash_account_id(conn), status, income_source_id, payee_id, note),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
 _SELECT = (
-    "SELECT t.*, c.name AS category_name "
+    "SELECT t.*, c.name AS category_name, s.name AS income_source_name "
     "FROM transactions t "
     "LEFT JOIN categories c ON c.id = t.category_id "
+    "LEFT JOIN income_sources s ON s.id = t.income_source_id "
 )
 
 
@@ -64,4 +93,10 @@ def list_recent(conn: sqlite3.Connection, limit: int = 20) -> list[sqlite3.Row]:
 def list_categories(conn: sqlite3.Connection) -> list[sqlite3.Row]:
     return conn.execute(
         "SELECT id, name FROM categories WHERE archived = 0 ORDER BY name"
+    ).fetchall()
+
+
+def list_income_sources(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    return conn.execute(
+        "SELECT id, name FROM income_sources WHERE archived = 0 ORDER BY id"
     ).fetchall()
