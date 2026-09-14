@@ -14,6 +14,7 @@ license = { file = "LICENSE" }
 # O pip resolve as transitivas (anyio, httpx, etc.) sozinho.
 dependencies = [
     "flet==0.86.5",
+    "openpyxl>=3.1",
 ]
 
 [project.optional-dependencies]

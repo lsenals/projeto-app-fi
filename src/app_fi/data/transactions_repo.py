@@ -153,10 +153,12 @@ def get(conn: sqlite3.Connection, tx_id: int) -> sqlite3.Row | None:
 
 
 _SELECT = (
-    "SELECT t.*, c.name AS category_name, s.name AS income_source_name "
+    "SELECT t.*, c.name AS category_name, s.name AS income_source_name, "
+    "  pay.name AS payee_name "
     "FROM transactions t "
     "LEFT JOIN categories c ON c.id = t.category_id "
     "LEFT JOIN income_sources s ON s.id = t.income_source_id "
+    "LEFT JOIN payees pay ON pay.id = t.payee_id "
 )
 
 

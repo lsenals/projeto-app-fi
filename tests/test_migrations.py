@@ -23,7 +23,7 @@ def test_migrations_are_idempotent(tmp_path):
     versions = [r["version"] for r in conn.execute(
         "SELECT version FROM schema_migrations ORDER BY version"
     )]
-    assert versions == ["001_init", "002_seed"]
+    assert versions == ["001_init", "002_seed", "003_recurring_forecast"]
 
 
 def test_seed_categories_exclude_income(tmp_path):
