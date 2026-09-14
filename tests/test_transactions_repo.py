@@ -74,3 +74,56 @@ def test_income_and_expense_net_in_balance(conn):
     assert totals.income_cents == 500000
     assert totals.expense_cents == 120000
     assert totals.balance_cents == 380000
+
+
+def test_update_expense_changes_fields_keeps_id(conn):
+    cats = {c["name"]: c["id"] for c in repo.list_categories(conn)}
+    tx_id = repo.add_expense(conn, date="2026-09-01", amount_cents=1000)
+    repo.update_expense(
+        conn, tx_id, date="2026-09-02", amount_cents=2000, category_id=cats["Lazer"],
+    )
+    row = repo.get(conn, tx_id)
+    assert row["id"] == tx_id
+    assert row["date"] == "2026-09-02"
+    assert row["amount_cents"] == 2000
+    assert row["category_name"] == "Lazer"
+
+
+def test_update_income_requires_source(conn):
+    src = repo.list_income_sources(conn)[0]["id"]
+    tx_id = repo.add_income(conn, date="2026-09-01", amount_cents=1000, income_source_id=src)
+    with pytest.raises(ValueError):
+        repo.update_income(conn, tx_id, date="2026-09-01", amount_cents=1000, income_source_id=None)
+
+
+def test_delete_removes_transaction(conn):
+    tx_id = repo.add_expense(conn, date="2026-09-01", amount_cents=1000)
+    repo.delete(conn, tx_id)
+    assert repo.get(conn, tx_id) is None
+
+
+def test_snapshot_and_restore_undoes_a_delete(conn):
+    cats = {c["name"]: c["id"] for c in repo.list_categories(conn)}
+    tx_id = repo.add_expense(
+        conn, date="2026-09-01", amount_cents=4990, category_id=cats["Alimentação"], note="padaria",
+    )
+    before = repo.snapshot(repo.get(conn, tx_id))
+    repo.delete(conn, tx_id)
+    assert repo.get(conn, tx_id) is None
+
+    repo.restore(conn, before)
+    restored = repo.get(conn, tx_id)
+    assert restored["id"] == tx_id
+    assert restored["amount_cents"] == 4990
+    assert restored["category_name"] == "Alimentação"
+    assert restored["note"] == "padaria"
+
+
+def test_snapshot_and_restore_undoes_an_edit(conn):
+    tx_id = repo.add_expense(conn, date="2026-09-01", amount_cents=1000)
+    before = repo.snapshot(repo.get(conn, tx_id))
+    repo.update_expense(conn, tx_id, date="2026-09-01", amount_cents=9999)
+    assert repo.get(conn, tx_id)["amount_cents"] == 9999
+
+    repo.restore(conn, before)
+    assert repo.get(conn, tx_id)["amount_cents"] == 1000

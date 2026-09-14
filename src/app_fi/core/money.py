@@ -7,12 +7,21 @@ Regra do projeto: dinheiro é sempre INTEGER em centavos. Estas funções são a
 from __future__ import annotations
 
 
+def _plain(cents: int) -> str:
+    reais, centavos = divmod(abs(cents), 100)
+    reais_str = f"{reais:,}".replace(",", ".")  # separador de milhar pt-BR
+    return f"{reais_str},{centavos:02d}"
+
+
 def format_brl(cents: int) -> str:
     """3490 -> 'R$ 34,90'   ·   -123456 -> '-R$ 1.234,56'"""
     sign = "-" if cents < 0 else ""
-    reais, centavos = divmod(abs(cents), 100)
-    reais_str = f"{reais:,}".replace(",", ".")  # separador de milhar pt-BR
-    return f"{sign}R$ {reais_str},{centavos:02d}"
+    return f"{sign}R$ {_plain(cents)}"
+
+
+def format_amount_input(cents: int) -> str:
+    """3490 -> '34,90' — sem 'R$', para pré-preencher o campo de valor ao editar."""
+    return _plain(cents)
 
 
 def parse_brl(text: str) -> int:

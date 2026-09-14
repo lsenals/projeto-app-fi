@@ -68,6 +68,90 @@ def add_income(
     return int(cur.lastrowid)
 
 
+def update_expense(
+    conn: sqlite3.Connection,
+    tx_id: int,
+    *,
+    date: str,
+    amount_cents: int,
+    category_id: int | None = None,
+    payee_id: int | None = None,
+    note: str | None = None,
+) -> None:
+    """Atualiza uma despesa existente. O tipo (despesa) não muda na edição."""
+    if amount_cents <= 0:
+        raise ValueError("O valor deve ser maior que zero.")
+    conn.execute(
+        "UPDATE transactions "
+        "SET date = ?, amount_cents = ?, category_id = ?, payee_id = ?, note = ? "
+        "WHERE id = ? AND kind = 'expense'",
+        (date, amount_cents, category_id, payee_id, note, tx_id),
+    )
+    conn.commit()
+
+
+def update_income(
+    conn: sqlite3.Connection,
+    tx_id: int,
+    *,
+    date: str,
+    amount_cents: int,
+    income_source_id: int,
+    payee_id: int | None = None,
+    note: str | None = None,
+) -> None:
+    """Atualiza uma receita existente. A origem é obrigatória."""
+    if amount_cents <= 0:
+        raise ValueError("O valor deve ser maior que zero.")
+    if income_source_id is None:
+        raise ValueError("A receita precisa de uma origem.")
+    conn.execute(
+        "UPDATE transactions "
+        "SET date = ?, amount_cents = ?, income_source_id = ?, payee_id = ?, note = ? "
+        "WHERE id = ? AND kind = 'income'",
+        (date, amount_cents, income_source_id, payee_id, note, tx_id),
+    )
+    conn.commit()
+
+
+def delete(conn: sqlite3.Connection, tx_id: int) -> None:
+    conn.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
+    conn.commit()
+
+
+_ROW_COLUMNS = (
+    "id", "date", "amount_cents", "account_id", "kind", "status",
+    "category_id", "income_source_id", "payee_id", "recurring_id",
+    "note", "created_at",
+)
+
+
+def snapshot(row: sqlite3.Row) -> dict:
+    """Extrai só as colunas reais da tabela de uma linha (que pode vir com os
+    joins de categoria/origem). Guarde o retorno antes de editar/excluir para
+    poder chamar :func:`restore` depois (o "Desfazer")."""
+    d = dict(row)
+    return {k: d[k] for k in _ROW_COLUMNS}
+
+
+def restore(conn: sqlite3.Connection, values: dict) -> None:
+    """Repõe um lançamento exatamente como estava, id incluído — o "Desfazer"
+    de uma edição ou exclusão. `values` vem de :func:`snapshot`."""
+    conn.execute(
+        "INSERT OR REPLACE INTO transactions "
+        "(id, date, amount_cents, account_id, kind, status, "
+        " category_id, income_source_id, payee_id, recurring_id, note, created_at) "
+        "VALUES (:id, :date, :amount_cents, :account_id, :kind, :status, "
+        " :category_id, :income_source_id, :payee_id, :recurring_id, :note, :created_at)",
+        values,
+    )
+    conn.commit()
+
+
+def get(conn: sqlite3.Connection, tx_id: int) -> sqlite3.Row | None:
+    return conn.execute(_SELECT + "WHERE t.id = ?", (tx_id,)).fetchone()
+
+
 _SELECT = (
     "SELECT t.*, c.name AS category_name, s.name AS income_source_name "
     "FROM transactions t "

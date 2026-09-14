@@ -1,6 +1,6 @@
 import pytest
 
-from app_fi.core.money import format_brl, parse_brl
+from app_fi.core.money import format_amount_input, format_brl, parse_brl
 
 
 @pytest.mark.parametrize(
@@ -42,3 +42,13 @@ def test_parse_brl_round_trips_format():
 def test_parse_brl_rejects_garbage(bad):
     with pytest.raises(ValueError):
         parse_brl(bad)
+
+
+@pytest.mark.parametrize(
+    "cents, text",
+    [(3490, "34,90"), (100000, "1.000,00"), (5, "0,05")],
+)
+def test_format_amount_input_has_no_currency_symbol(cents, text):
+    assert format_amount_input(cents) == text
+    # tem que voltar a ser um valor válido para parse_brl (round-trip do formulário de edição)
+    assert parse_brl(format_amount_input(cents)) == cents
