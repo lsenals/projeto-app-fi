@@ -122,17 +122,31 @@ def main(page: ft.Page) -> None:
     mes_titulo = ft.Text(size=13, color=ft.Colors.GREY)
     lista = ft.ListView(expand=True, spacing=2)
 
+    def cabecalho_lista() -> ft.Control:
+        return ft.Container(
+            content=ft.Row([
+                ft.Text("Data", width=44, size=11, color=ft.Colors.GREY),
+                ft.Text("Categoria", width=110, size=11, color=ft.Colors.GREY),
+                ft.Text("Descrição", expand=True, size=11, color=ft.Colors.GREY),
+                ft.Text("Valor", size=11, color=ft.Colors.GREY),
+            ]),
+            padding=ft.Padding(left=4, right=4, top=0, bottom=0),
+        )
+
     def linha(r) -> ft.Control:
         receita = r["kind"] == "income"
-        nome = r["payee_name"] or (r["income_source_name"] if receita else r["category_name"]) or (
-            "—" if receita else "Sem categoria"
-        )
+        categoria = r["income_source_name"] if receita else (r["category_name"] or "Sem categoria")
+        descricao = r["payee_name"] or "—"
         sinal = "+" if receita else "−"
         cor = ft.Colors.GREEN if receita else ft.Colors.RED
         return ft.Container(
             content=ft.Row([
                 ft.Text(f"{r['date'][8:10]}/{r['date'][5:7]}", width=44, color=ft.Colors.GREY),
-                ft.Text(nome, expand=True),
+                ft.Text(categoria, width=110, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
+                ft.Text(
+                    descricao, expand=True, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS,
+                    color=ft.Colors.GREY if descricao == "—" else None,
+                ),
                 ft.Text(f"{sinal} {format_brl(r['amount_cents'])}", color=cor),
             ]),
             on_click=lambda e, tx_id=r["id"]: abrir_dialog_lancamento(tx_id=tx_id),
@@ -188,6 +202,7 @@ def main(page: ft.Page) -> None:
             saldo,
             resumo,
             ft.Divider(),
+            cabecalho_lista(),
             lista,
         ]
         page.floating_action_button = ft.FloatingActionButton(
