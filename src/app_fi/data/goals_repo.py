@@ -68,6 +68,13 @@ def recent_achievements(conn: sqlite3.Connection, limit: int = 10) -> list[sqlit
     ).fetchall()
 
 
+def count_achieved(conn: sqlite3.Connection) -> int:
+    """Total de PRs batidos na história — base do Sistema de Nível
+    (`core.goals.calcular_nivel`)."""
+    row = conn.execute("SELECT COUNT(*) AS n FROM goal_records WHERE achieved = 1").fetchone()
+    return row["n"]
+
+
 def monthly_any_achieved(conn: sqlite3.Connection, limit: int = 12) -> list[bool]:
     """Um bool por mês (mais recente primeiro): True se algum objetivo bateu
     naquele mês. Base para `core.goals.overall_streak`."""

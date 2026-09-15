@@ -26,7 +26,7 @@ dev = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-app_fi = ["migrations/*.sql"]
+app_fi = ["migrations/*.sql", "assets/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

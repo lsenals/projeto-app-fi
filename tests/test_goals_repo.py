@@ -63,6 +63,16 @@ def test_monthly_any_achieved_most_recent_first(conn):
     assert flags == [False, True, False]
 
 
+def test_count_achieved_conta_so_os_batidos(conn):
+    a = repo.add(conn, kind="renda_extra", label="A", target_cents=10000)
+    b = repo.add(conn, kind="renda_extra", label="B", target_cents=10000)
+    assert repo.count_achieved(conn) == 0
+    repo.record_result(conn, a, "2026-08", achieved=True)
+    repo.record_result(conn, b, "2026-08", achieved=False)
+    repo.record_result(conn, a, "2026-09", achieved=True)
+    assert repo.count_achieved(conn) == 2
+
+
 def test_settings_roundtrip(conn):
     assert repo.get_setting(conn, "theme_mode", default="dark") == "dark"
     repo.set_setting(conn, "theme_mode", "light")

@@ -48,6 +48,7 @@ _MESES = [
 # verde e dourado vêm da própria fruta. Ver brand book em Obsidian > 06-Projects.
 _COR_PRIMARIA = "#00E676"      # verde esmeralda/limão — destaques, sucesso, botões
 _COR_SECUNDARIA = "#FFD600"    # amarelo dourado/neon — ofensiva, PRs, moedas
+_COR_TERCIARIA = "#40C4FF"     # azul claro — terceiro anel do Painel de Finanças
 _COR_FUNDO = ft.Colors.BLUE_GREY_900       # carbono — fundo do app
 _COR_SUPERFICIE = ft.Colors.BLUE_GREY_800  # carbono, um tom mais claro — cards/superfícies
 
@@ -88,6 +89,131 @@ def _formatar_data_br(iso: str) -> str:
 
 def _formatar_mes_ano(iso: str) -> str:
     return f"{iso[5:7]}/{iso[0:4]}"
+
+
+def _anel_progresso(percentual: int, cor: str) -> ft.Control:
+    """Um ProgressRing com a porcentagem escrita no centro — Flet não tem
+    isso pronto, então empilhamos um Text por cima com ft.Stack."""
+    return ft.Stack(
+        [
+            ft.ProgressRing(
+                value=percentual / 100, color=cor,
+                bgcolor=ft.Colors.with_opacity(0.15, cor),
+                width=64, height=64, stroke_width=6,
+            ),
+            ft.Container(
+                content=ft.Text(f"{percentual}%", size=13, weight=ft.FontWeight.BOLD),
+                width=64, height=64, alignment=ft.Alignment.CENTER,
+            ),
+        ],
+        width=64, height=64,
+    )
+
+
+def _card_saldo_meta(titulo: str, valor_cents: int, ratio: float, icone, cor: str) -> ft.Control:
+    """Card branco "flutuando" sobre o fundo dark do app — contraste
+    deliberado, não é o tema dark padrão do resto da UI (decisão de marca)."""
+    return ft.Container(
+        content=ft.Column(
+            [
+                ft.Row(
+                    [
+                        ft.Container(
+                            content=ft.Icon(icone, color=ft.Colors.WHITE, size=16),
+                            bgcolor=cor, width=30, height=30, border_radius=100,
+                            alignment=ft.Alignment.CENTER,
+                        ),
+                        ft.Text(
+                            titulo, size=12, weight=ft.FontWeight.W_600, color=ft.Colors.GREY_700,
+                            max_lines=1, overflow=ft.TextOverflow.ELLIPSIS, expand=True,
+                        ),
+                    ],
+                    spacing=8,
+                ),
+                ft.Text(format_brl(valor_cents), size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
+                ft.ProgressBar(value=ratio, color=cor, bgcolor=ft.Colors.GREY_200, border_radius=8, bar_height=6),
+            ],
+            spacing=8,
+        ),
+        expand=True,
+        bgcolor=ft.Colors.WHITE,
+        border_radius=15,
+        padding=16,
+        shadow=ft.BoxShadow(
+            blur_radius=16, spread_radius=1,
+            color=ft.Colors.with_opacity(0.25, ft.Colors.BLACK),
+            offset=ft.Offset(0, 4),
+        ),
+    )
+
+
+def cabecalho_boas_vindas(nivel: goals_core.NivelProgresso) -> ft.Control:
+    """Mascote + saudação + progresso de Nível — fica no topo da Home, fora
+    dos cards claros do Painel de Finanças (mesmo fundo dark do resto do app,
+    igual no mockup da marca)."""
+    return ft.Row(
+        [
+            ft.Image(
+                src="mascote_poupanca.png", width=64, height=64,
+                fit=ft.BoxFit.CONTAIN,
+            ),
+            ft.Column(
+                [
+                    ft.Text("Bem-vindo!", size=18, weight=ft.FontWeight.BOLD),
+                    ft.Row(
+                        [
+                            ft.Text(f"Nível {nivel.nivel}", size=13, color=_COR_SECUNDARIA, weight=ft.FontWeight.BOLD),
+                            ft.Text(f"{nivel.xp_no_nivel}/{nivel.xp_por_nivel} XP", size=11, color=ft.Colors.GREY),
+                        ],
+                        spacing=8,
+                    ),
+                    ft.ProgressBar(
+                        value=nivel.ratio, color=_COR_SECUNDARIA, bgcolor=ft.Colors.GREY_800,
+                        border_radius=8, bar_height=8, width=200,
+                    ),
+                ],
+                spacing=4,
+                expand=True,
+            ),
+        ],
+        spacing=12,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+    )
+
+
+def painel_financas(
+    aneis_percentuais: tuple[int, int, int] = (0, 20, 10),
+    saldo_semana_cents: int = 10000,
+    saldo_semana_ratio: float = 0.35,
+    meta_poupanca_cents: int = 60000,
+    meta_poupanca_ratio: float = 0.6,
+) -> ft.Control:
+    """Painel de Finanças — 3 anéis de progresso + 2 cards (Saldos da Semana,
+    Metas de Poupança). Valores vêm por parâmetro; por ora usamos os mesmos
+    do mockup da marca como exemplo (ainda não ligado a dados reais)."""
+    cores_aneis = (_COR_PRIMARIA, _COR_SECUNDARIA, _COR_TERCIARIA)
+    return ft.Column(
+        [
+            ft.Row(
+                [_anel_progresso(p, c) for p, c in zip(aneis_percentuais, cores_aneis)],
+                alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+            ),
+            ft.Row(
+                [
+                    _card_saldo_meta(
+                        "Saldos da Semana", saldo_semana_cents, saldo_semana_ratio,
+                        ft.Icons.ATTACH_MONEY_ROUNDED, _COR_PRIMARIA,
+                    ),
+                    _card_saldo_meta(
+                        "Metas de Poupança", meta_poupanca_cents, meta_poupanca_ratio,
+                        ft.Icons.ACCOUNT_BALANCE_WALLET_ROUNDED, _COR_SECUNDARIA,
+                    ),
+                ],
+                spacing=12,
+            ),
+        ],
+        spacing=16,
+    )
 
 
 def main(page: ft.Page) -> None:
@@ -290,7 +416,11 @@ def main(page: ft.Page) -> None:
                 ),
             ],
         )
+        nivel = goals_core.calcular_nivel(goals_repo.count_achieved(conn))
         body.controls = [
+            cabecalho_boas_vindas(nivel),
+            painel_financas(),
+            ft.Divider(),
             ft.Row([
                 ft.IconButton(
                     icon=ft.Icons.CHEVRON_LEFT, icon_size=18, tooltip="Mês anterior",

@@ -61,3 +61,32 @@ def overall_streak(monthly_achieved_flags: list[bool]) -> int:
             break
         streak += 1
     return streak
+
+
+# Sistema de Nível — XP vem só de PRs batidos (decisão explícita: lançamento
+# diário não gera XP, "não gamificar o lançamento", regra definida desde a
+# primeira versão da UI gamificada). Números de partida, fáceis de ajustar.
+XP_POR_PR = 50
+XP_POR_NIVEL = 100
+
+
+@dataclass(frozen=True)
+class NivelProgresso:
+    nivel: int              # 1-indexado — 0 PRs = nível 1
+    xp_total: int
+    xp_no_nivel: int        # XP acumulado dentro do nível atual (0..xp_por_nivel-1)
+    xp_por_nivel: int
+    ratio: float             # xp_no_nivel / xp_por_nivel — pronto pra barra de progresso
+
+
+def calcular_nivel(total_prs: int, xp_por_pr: int = XP_POR_PR, xp_por_nivel: int = XP_POR_NIVEL) -> NivelProgresso:
+    """Nível deriva do total de PRs já batidos (não é um contador guardado à
+    parte — mesma filosofia de `overall_streak`: calcula sempre a partir do
+    histórico real em `goal_records`, nunca duplica o estado)."""
+    xp_total = total_prs * xp_por_pr
+    nivel = xp_total // xp_por_nivel + 1
+    xp_no_nivel = xp_total % xp_por_nivel
+    return NivelProgresso(
+        nivel=nivel, xp_total=xp_total, xp_no_nivel=xp_no_nivel,
+        xp_por_nivel=xp_por_nivel, ratio=xp_no_nivel / xp_por_nivel,
+    )

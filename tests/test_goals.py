@@ -1,4 +1,5 @@
 from app_fi.core.goals import (
+    calcular_nivel,
     evaluate_reducao_categoria,
     evaluate_renda_extra,
     evaluate_saldo_positivo_seguido,
@@ -64,3 +65,33 @@ def test_overall_streak_zero_quando_mes_atual_nao_bateu():
 
 def test_overall_streak_vazio():
     assert overall_streak([]) == 0
+
+
+def test_calcular_nivel_zero_prs_e_nivel_1_zerado():
+    n = calcular_nivel(total_prs=0, xp_por_pr=50, xp_por_nivel=100)
+    assert n.nivel == 1
+    assert n.xp_total == 0
+    assert n.xp_no_nivel == 0
+    assert n.ratio == 0.0
+
+
+def test_calcular_nivel_sobe_exatamente_no_limite():
+    # 2 PRs * 50 XP = 100 XP = exatamente 1 nível cheio -> nível 2, zerado
+    n = calcular_nivel(total_prs=2, xp_por_pr=50, xp_por_nivel=100)
+    assert n.nivel == 2
+    assert n.xp_no_nivel == 0
+    assert n.ratio == 0.0
+
+
+def test_calcular_nivel_meio_do_nivel():
+    # 1 PR * 50 XP = 50 XP -> metade do nível 1
+    n = calcular_nivel(total_prs=1, xp_por_pr=50, xp_por_nivel=100)
+    assert n.nivel == 1
+    assert n.xp_no_nivel == 50
+    assert n.ratio == 0.5
+
+
+def test_calcular_nivel_usa_constantes_padrao():
+    n = calcular_nivel(total_prs=3)  # 3 * XP_POR_PR (50) = 150 XP
+    assert n.nivel == 2
+    assert n.xp_no_nivel == 50

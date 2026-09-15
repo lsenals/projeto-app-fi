@@ -95,3 +95,40 @@ APK direto no Windows. `flet build ipa` exige macOS com Xcode; sem isso, iOS fic
 (Mac físico ou CI com runner macOS). Builds mobile ainda são lentos pra iterar — prefira
 testar via `ft.AppView.WEB_BROWSER`/desktop primeiro e só buildar pra Android quando quiser
 validar algo que só existe no dispositivo de verdade (permissões, file picker nativo, etc.).
+
+**Toolchain Android instalado em 2026-09-15** (`flutter doctor` limpo, exceto Visual Studio —
+irrelevante, é só pra app Windows nativo):
+- Flutter 3.47.4 stable em `C:\src\flutter` (não versionado, é infra da máquina)
+- Android SDK em `%LOCALAPPDATA%\Android\Sdk`: cmdline-tools, platform-tools, platform
+  android-36, build-tools 28.0.3 e 34.0.0
+- JDK 17 (já existia em `C:\Program Files\Java\jdk-17`)
+- Variáveis de usuário: `JAVA_HOME`, `ANDROID_HOME`, `ANDROID_SDK_ROOT`, PATH com
+  `flutter\bin`, `Sdk\platform-tools` e `Sdk\cmdline-tools\latest\bin`
+
+Pra rodar `flet build apk`, abrir um terminal **novo** (as variáveis são de usuário, uma
+sessão já aberta antes da instalação não as tem).
+
+## Assets (imagens)
+
+Ficam em `src/app_fi/assets/` — é onde `ft.run()` procura por padrão (`assets_dir="assets"`,
+resolvido a partir do diretório do script). **Pegadinha:** essa resolução usa `sys.argv[0]`,
+então só funciona rodando o arquivo de verdade (`python src/app_fi/main.py`) — testar via
+`python -c "..."` quebra o carregamento de assets (resolve pro cwd, dá 404) porque não há um
+`sys.argv[0]` real apontando pro arquivo.
+
+Mascotes do abacaxi (2026-09-15, ilustrações fornecidas pelo usuário):
+- `mascote_poupanca.png` — o principal, usado no cabeçalho de boas-vindas/Nível da Home.
+  As ilustrações originais vêm em JPEG com fundo branco sólido; em vez de deixar
+  transparente (primeira tentativa — funcionava, mas decidimos que pintar com a cor do
+  app fica mais natural, sem risco de halo/anti-aliasing nas bordas), o fundo é **pintado
+  com a cor exata do app** (`#263238`, a mesma de `_COR_FUNDO`). Processo: BFS com critério
+  de "quase branco" (não o `ImageDraw.floodfill` do Pillow, que compara pixel a pixel
+  contra a cor da semente e deixa sobras) a partir de toda a borda da imagem, **mais**
+  qualquer bolsão de fundo isolado internamente (ex: o vão entre o braço e a moeda) —
+  identificado inspecionando o tamanho de cada bolsão branco encontrado (os pequenos, tipo
+  brilho dos olhos e dentes, são partes do personagem e não devem ser preenchidos). Usei
+  `Pillow` temporariamente no venv só pra esse processamento, **não é dependência do app**
+  (não entrou no `pyproject.toml`, não é importado em nenhum lugar do código).
+- `mascote_seguranca.png` e `mascote_global.png` — variantes (coroa/escudo/cofre; globo/
+  moedas internacionais), ainda **com fundo branco** — se forem usadas na UI, precisam do
+  mesmo tratamento de remoção de fundo.
