@@ -12,7 +12,8 @@ def test_migrations_create_all_tables(tmp_path):
     )}
     assert {
         "accounts", "categories", "income_sources", "payees",
-        "transactions", "recurring", "schema_migrations",
+        "transactions", "recurring", "goals", "goal_records",
+        "app_settings", "schema_migrations",
     } <= tables
 
 
@@ -23,7 +24,9 @@ def test_migrations_are_idempotent(tmp_path):
     versions = [r["version"] for r in conn.execute(
         "SELECT version FROM schema_migrations ORDER BY version"
     )]
-    assert versions == ["001_init", "002_seed", "003_recurring_forecast"]
+    assert versions == [
+        "001_init", "002_seed", "003_recurring_forecast", "004_goals", "005_sort_order",
+    ]
 
 
 def test_seed_categories_exclude_income(tmp_path):

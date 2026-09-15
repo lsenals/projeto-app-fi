@@ -87,3 +87,14 @@ def month_over_month(
     ]
     linhas.sort(key=lambda r: r.current_cents, reverse=True)
     return linhas
+
+
+def consecutive_positive_streak(monthly_balances_cents: list[int]) -> int:
+    """`monthly_balances_cents` do mês mais recente pro mais antigo. Conta quantos
+    meses seguidos, a partir do primeiro, tiveram saldo positivo (> 0)."""
+    streak = 0
+    for saldo in monthly_balances_cents:
+        if saldo <= 0:
+            break
+        streak += 1
+    return streak

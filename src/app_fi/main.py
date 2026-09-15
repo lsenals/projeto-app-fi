@@ -8,18 +8,27 @@ modela e prevê término, sem ainda criar lançamento sozinha — isso é o moto
 de materialização, trabalho futuro.
 """
 
+import asyncio
 import datetime as dt
 import os
 import sqlite3
 
 import flet as ft
 
+from app_fi.core import goals as goals_core
 from app_fi.core.c6_import import ImportedRow, classify_rows
 from app_fi.core.dates import previous_month
 from app_fi.core.money import format_amount_input, format_brl, parse_brl
 from app_fi.core.recurring import forecast as recurring_forecast
-from app_fi.core.summary import category_breakdown, income_by_source, month_over_month, month_totals
+from app_fi.core.summary import (
+    category_breakdown,
+    consecutive_positive_streak,
+    income_by_source,
+    month_over_month,
+    month_totals,
+)
 from app_fi.data import backup, categories_repo
+from app_fi.data import goals_repo
 from app_fi.data import import_review
 from app_fi.data import payees_repo
 from app_fi.data import recurring_repo
@@ -33,6 +42,40 @@ _MESES = [
     "", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ]
+
+# cores neon do tema "fitness financeiro" — recordes batidos e ofensiva ativa
+_COR_RECORDE = "#39FF14"
+_COR_OFENSIVA = "#FF7A00"
+
+_ICONES_CATEGORIA = {
+    "Moradia": ft.Icons.HOME_ROUNDED,
+    "Alimentação": ft.Icons.RESTAURANT_ROUNDED,
+    "Transporte": ft.Icons.DIRECTIONS_CAR_ROUNDED,
+    "Saúde": ft.Icons.FAVORITE_ROUNDED,
+    "Lazer": ft.Icons.SPORTS_ESPORTS_ROUNDED,
+    "Compras": ft.Icons.SHOPPING_BAG_ROUNDED,
+    "Assinaturas": ft.Icons.SUBSCRIPTIONS_ROUNDED,
+    "Educação": ft.Icons.SCHOOL_ROUNDED,
+    "Outros": ft.Icons.MORE_HORIZ_ROUNDED,
+}
+_ICONES_RECEITA = {
+    "Salário": ft.Icons.PAYMENTS_ROUNDED,
+    "Renda extra": ft.Icons.BOLT_ROUNDED,
+    "Reembolso": ft.Icons.UNDO_ROUNDED,
+    "Outros": ft.Icons.MORE_HORIZ_ROUNDED,
+}
+_ICONE_PADRAO = ft.Icons.LABEL_ROUNDED
+
+_ICONES_OBJETIVO = {
+    "teto_categoria": ft.Icons.SHIELD_ROUNDED,
+    "reducao_categoria": ft.Icons.TRENDING_DOWN_ROUNDED,
+    "renda_extra": ft.Icons.BOLT_ROUNDED,
+    "saldo_positivo_seguido": ft.Icons.LOCAL_FIRE_DEPARTMENT_ROUNDED,
+}
+
+
+def _icone_categoria(nome: str, receita: bool = False):
+    return (_ICONES_RECEITA if receita else _ICONES_CATEGORIA).get(nome, _ICONE_PADRAO)
 
 
 def _formatar_data_br(iso: str) -> str:
@@ -49,8 +92,27 @@ def main(page: ft.Page) -> None:
     conn = get_db()
     hoje = dt.date.today()
 
+    tema_salvo = goals_repo.get_setting(conn, "theme_mode", default="dark")
+    page.theme_mode = ft.ThemeMode.LIGHT if tema_salvo == "light" else ft.ThemeMode.DARK
+
     body = ft.Column(expand=True)
     page.add(body)
+
+    # -------------------------------------------------------- navegação (bottom bar)
+
+    def ir_para(indice: int) -> None:
+        page.navigation_bar.selected_index = indice
+        [montar_home, montar_lancamento_rapido, montar_objetivos][indice]()
+
+    page.navigation_bar = ft.NavigationBar(
+        selected_index=0,
+        destinations=[
+            ft.NavigationBarDestination(icon=ft.Icons.HOME_ROUNDED, label="Home"),
+            ft.NavigationBarDestination(icon=ft.Icons.ADD_CIRCLE_ROUNDED, label="Lançar"),
+            ft.NavigationBarDestination(icon=ft.Icons.EMOJI_EVENTS_ROUNDED, label="Objetivos"),
+        ],
+        on_change=lambda e: ir_para(e.control.selected_index),
+    )
 
     def notificar(mensagem: str, desfazer) -> None:
         def ao_clicar_desfazer(_e) -> None:
@@ -171,6 +233,7 @@ def main(page: ft.Page) -> None:
         page.update()
 
     def montar_home() -> None:
+        page.navigation_bar.selected_index = 0
         page.appbar = ft.AppBar(
             leading=ft.IconButton(icon=ft.Icons.MENU, on_click=abrir_menu),
             title=ft.Text("App FI"),
@@ -206,7 +269,7 @@ def main(page: ft.Page) -> None:
             lista,
         ]
         page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.ADD, on_click=lambda e: abrir_dialog_lancamento(),
+            icon=ft.Icons.ADD, bgcolor=_COR_OFENSIVA, on_click=lambda e: ir_para(1),
         )
         atualizar()
 
@@ -416,6 +479,14 @@ def main(page: ft.Page) -> None:
     importacao_lista = ft.ListView(expand=True, spacing=6)
     importacao_resumo = ft.Text(size=13, color=ft.Colors.GREY)
 
+    def _mostrar_pop_up(titulo: str, icone, cor, linhas: list[ft.Control]) -> None:
+        page.show_dialog(ft.AlertDialog(
+            modal=True,
+            title=ft.Row([ft.Icon(icone, color=cor), ft.Text(titulo)], spacing=8),
+            content=ft.Column(linhas, tight=True, spacing=6, width=380),
+            actions=[ft.FilledButton("OK", on_click=lambda e: page.pop_dialog())],
+        ))
+
     async def abrir_importacao(_e) -> None:
         selecionados = await file_picker.pick_files(
             dialog_title="Selecionar fatura (CSV ou XLSX)",
@@ -424,16 +495,39 @@ def main(page: ft.Page) -> None:
         )
         if not selecionados or not selecionados[0].path:
             return
+        caminho, nome_arquivo = selecionados[0].path, selecionados[0].name
 
         try:
-            linhas_arquivo = read_statement(selecionados[0].path)
+            linhas_arquivo = read_statement(caminho)
             pre_lancamentos = classify_rows(linhas_arquivo)
-        except Exception:
-            confirmar("Não consegui ler esse arquivo. Confira se é uma fatura do C6 em CSV ou XLSX.")
+        except Exception as ex:
+            _mostrar_pop_up(
+                "Não consegui importar", ft.Icons.ERROR_ROUNDED, ft.Colors.RED,
+                [
+                    ft.Text(f"Arquivo: {nome_arquivo}"),
+                    ft.Text(f"Motivo: {ex}" if str(ex) else f"Erro: {type(ex).__name__}"),
+                    ft.Text(
+                        "Confira se é uma fatura do C6 em CSV ou XLSX, com o cabeçalho "
+                        "de colunas original do banco.",
+                        size=12, color=ft.Colors.GREY,
+                    ),
+                ],
+            )
             return
 
         if not pre_lancamentos:
-            confirmar("Nenhum lançamento novo encontrado no arquivo.")
+            _mostrar_pop_up(
+                "Nada para importar", ft.Icons.INFO_ROUNDED, ft.Colors.GREY,
+                [
+                    ft.Text(f"Arquivo: {nome_arquivo}"),
+                    ft.Text(f"Lemos {len(linhas_arquivo)} linha(s), mas nenhuma virou lançamento."),
+                    ft.Text(
+                        "Pode ser uma fatura só com pagamentos (não entram como gasto), "
+                        "ou o arquivo não é do formato esperado.",
+                        size=12, color=ft.Colors.GREY,
+                    ),
+                ],
+            )
             return
 
         itens_importacao.clear()
@@ -496,17 +590,45 @@ def main(page: ft.Page) -> None:
 
     def confirmar_importacao(_e) -> None:
         fontes = {s["name"]: s["id"] for s in repo.list_income_sources(conn)}
-        gravados = 0
+        gravados = despesas = receitas = ignorados = 0
+        total_cents = 0
+        meses: set[str] = set()
         for item in itens_importacao:
             if not item.incluir:
+                ignorados += 1
                 continue
             if item.linha.kind == "expense":
                 import_review.confirm_expense(conn, item.linha, item.category_id)
+                despesas += 1
             else:
                 import_review.confirm_income(conn, item.linha, fontes[item.linha.income_source_name])
+                receitas += 1
             gravados += 1
+            total_cents += item.linha.amount_cents
+            meses.add(item.linha.date[:7])
         montar_home()
-        confirmar(f"{gravados} lançamento(s) importado(s).")
+
+        if gravados == 0:
+            _mostrar_pop_up(
+                "Nada foi gravado", ft.Icons.INFO_ROUNDED, ft.Colors.GREY,
+                [ft.Text("Todos os lançamentos da revisão estavam desmarcados.")],
+            )
+            return
+
+        linhas_meses = ", ".join(
+            f"{_MESES[int(m[5:7])].capitalize()}/{m[:4]}" for m in sorted(meses)
+        )
+        detalhes = [
+            ft.Text(f"{gravados} lançamento(s) gravado(s) — {despesas} despesa(s), {receitas} receita(s)."),
+            ft.Text(f"Mês(es): {linhas_meses}."),
+            ft.Text(f"Total movimentado: {format_brl(total_cents)}."),
+        ]
+        if ignorados:
+            detalhes.append(ft.Text(
+                f"{ignorados} linha(s) deixada(s) de fora (desmarcada(s) na revisão).",
+                size=12, color=ft.Colors.GREY,
+            ))
+        _mostrar_pop_up("Fatura importada", ft.Icons.CHECK_CIRCLE_ROUNDED, _COR_RECORDE, detalhes)
 
     def montar_revisao_importacao() -> None:
         page.appbar = ft.AppBar(
@@ -1062,6 +1184,455 @@ def main(page: ft.Page) -> None:
         page.update()
         confirmar("Backup criado.")
 
+    # ---------------------------------------------------------- lançamento rápido
+
+    def montar_lancamento_rapido() -> None:
+        page.navigation_bar.selected_index = 1
+        page.appbar = ft.AppBar(title=ft.Text("Lançar"))
+        page.floating_action_button = None
+
+        kind = {"valor": "expense"}
+        escolhido = {"valor": None}
+
+        valor = ft.TextField(
+            value="", autofocus=True, text_align=ft.TextAlign.CENTER,
+            text_style=ft.TextStyle(size=40, weight=ft.FontWeight.BOLD),
+            border=ft.InputBorder.NONE, hint_text="0,00",
+            input_filter=ft.InputFilter(regex_string=r"^[0-9.,]*$", allow=True),
+        )
+        estabelecimento = ft.TextField(label="Estabelecimento (opcional)", dense=True)
+        grid = ft.Row(wrap=True, spacing=10, run_spacing=10)
+        erro = ft.Text(color=ft.Colors.RED, visible=False, size=12)
+        texto_botao = ft.Text("Registrar", size=16, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK)
+        botao_confirmar = ft.Container(
+            content=texto_botao,
+            bgcolor=_COR_OFENSIVA,
+            border_radius=100,
+            padding=ft.Padding(left=24, right=24, top=16, bottom=16),
+            alignment=ft.Alignment.CENTER,
+            animate=ft.Animation(250, ft.AnimationCurve.EASE_OUT),
+            ink=True,
+        )
+
+        itens_atuais: dict[str, list] = {"valor": []}
+
+        def item_icone(item_id: int, nome: str, icone, arrastando: bool = False) -> ft.Control:
+            selecionado = escolhido["valor"] == item_id
+            return ft.Container(
+                content=ft.Column(
+                    [
+                        ft.Icon(icone, size=26, color=ft.Colors.BLACK if selecionado else ft.Colors.WHITE),
+                        ft.Text(
+                            nome, size=10, color=ft.Colors.BLACK if selecionado else ft.Colors.WHITE,
+                            text_align=ft.TextAlign.CENTER, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS,
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4, tight=True,
+                ),
+                width=74, height=74,
+                bgcolor=_COR_OFENSIVA if selecionado else ft.Colors.GREY_900,
+                border_radius=18,
+                alignment=ft.Alignment.CENTER,
+                animate=ft.Animation(180, ft.AnimationCurve.EASE_OUT),
+                opacity=0.35 if arrastando else 1,
+                ink=True,
+                on_click=None if arrastando else (lambda e, i=item_id: selecionar(i)),
+            )
+
+        def ao_soltar(e: ft.DragTargetEvent) -> None:
+            origem_id, destino_id = e.src.data, e.control.data
+            if origem_id == destino_id:
+                return
+            lista = itens_atuais["valor"]
+            ids = [it["id"] for it in lista]
+            lista.insert(ids.index(destino_id), lista.pop(ids.index(origem_id)))
+            if kind["valor"] == "expense":
+                categories_repo.reorder(conn, [it["id"] for it in lista])
+            else:
+                repo.reorder_income_sources(conn, [it["id"] for it in lista])
+            montar_grid()
+
+        def item_arrastavel(it, receita: bool) -> ft.Control:
+            icone = _icone_categoria(it["name"], receita=receita)
+            return ft.DragTarget(
+                group="itens_lancamento",
+                data=it["id"],
+                on_accept=ao_soltar,
+                content=ft.Draggable(
+                    group="itens_lancamento",
+                    data=it["id"],
+                    content=item_icone(it["id"], it["name"], icone),
+                    content_feedback=ft.Container(opacity=0.85, content=item_icone(it["id"], it["name"], icone)),
+                    content_when_dragging=item_icone(it["id"], it["name"], icone, arrastando=True),
+                ),
+            )
+
+        def montar_grid() -> None:
+            itens = (
+                categories_repo.list_active(conn) if kind["valor"] == "expense"
+                else repo.list_income_sources(conn)
+            )
+            itens_atuais["valor"] = list(itens)
+            grid.controls = [item_arrastavel(it, receita=kind["valor"] == "income") for it in itens]
+            page.update()
+
+        def selecionar(item_id: int) -> None:
+            escolhido["valor"] = None if escolhido["valor"] == item_id else item_id
+            montar_grid()
+
+        def trocar_tipo(e: ft.ControlEvent) -> None:
+            kind["valor"] = e.control.selected[0] if e.control.selected else "expense"
+            escolhido["valor"] = None
+            montar_grid()
+
+        tipo = ft.SegmentedButton(
+            segments=[
+                ft.Segment(value="expense", label=ft.Text("Despesa")),
+                ft.Segment(value="income", label=ft.Text("Receita")),
+            ],
+            selected=["expense"],
+            on_change=trocar_tipo,
+        )
+
+        async def confirmar_lancamento(_e) -> None:
+            erro.visible = False
+            try:
+                cents = parse_brl(valor.value or "")
+                if cents <= 0:
+                    raise ValueError("Informe um valor válido.")
+            except ValueError as ex:
+                erro.value = str(ex)
+                erro.visible = True
+                page.update()
+                return
+            if kind["valor"] == "income" and escolhido["valor"] is None:
+                erro.value = "Escolha a origem da receita."
+                erro.visible = True
+                page.update()
+                return
+
+            nome_estabelecimento = (estabelecimento.value or "").strip()
+            payee_id = payees_repo.get_or_create(conn, nome_estabelecimento) if nome_estabelecimento else None
+            if kind["valor"] == "expense":
+                if payee_id is not None and escolhido["valor"] is not None:
+                    payees_repo.set_default_category(conn, payee_id, escolhido["valor"])
+                repo.add_expense(
+                    conn, date=hoje.isoformat(), amount_cents=cents,
+                    category_id=escolhido["valor"], payee_id=payee_id,
+                )
+            else:
+                repo.add_income(
+                    conn, date=hoje.isoformat(), amount_cents=cents,
+                    income_source_id=escolhido["valor"], payee_id=payee_id,
+                )
+
+            # feedback visual instantâneo: botão pisca verde, depois limpa pro próximo lançamento
+            botao_confirmar.bgcolor = _COR_RECORDE
+            texto_botao.value = "Registrado!"
+            page.update()
+            await asyncio.sleep(0.6)
+            valor.value = ""
+            estabelecimento.value = ""
+            escolhido["valor"] = None
+            botao_confirmar.bgcolor = _COR_OFENSIVA
+            texto_botao.value = "Registrar"
+            montar_grid()
+            await valor.focus()
+            page.update()
+
+        botao_confirmar.on_click = confirmar_lancamento
+
+        montar_grid()
+        body.controls = [
+            ft.Text("Novo lançamento", size=20, weight=ft.FontWeight.BOLD),
+            tipo,
+            ft.Container(
+                content=valor, padding=16, border_radius=20, bgcolor=ft.Colors.GREY_900,
+                alignment=ft.Alignment.CENTER,
+            ),
+            ft.Text("Categoria" if kind["valor"] == "expense" else "Origem", size=12, color=ft.Colors.GREY),
+            grid,
+            estabelecimento,
+            erro,
+            ft.Container(content=botao_confirmar, alignment=ft.Alignment.CENTER, padding=ft.Padding(left=0, right=0, top=12, bottom=0)),
+        ]
+        page.update()
+
+    # ---------------------------------------------------------------- objetivos
+
+    def _saldos_ultimos_meses(ano: int, mes: int, quantidade: int) -> list[int]:
+        saldos = []
+        a, m = ano, mes
+        for _ in range(quantidade):
+            saldos.append(month_totals(repo.list_month(conn, a, m)).balance_cents)
+            a, m = previous_month(a, m)
+        return saldos
+
+    def _avaliar_objetivo(g: sqlite3.Row, rows_atual, rows_anterior, ano: int, mes: int) -> goals_core.GoalProgress:
+        kind = g["kind"]
+        if kind == "teto_categoria":
+            gasto = dict(category_breakdown(rows_atual)).get(g["category_name"], 0)
+            return goals_core.evaluate_teto_categoria(gasto, g["target_cents"])
+        if kind == "reducao_categoria":
+            atual = dict(category_breakdown(rows_atual)).get(g["category_name"], 0)
+            anterior = dict(category_breakdown(rows_anterior)).get(g["category_name"], 0)
+            return goals_core.evaluate_reducao_categoria(atual, anterior)
+        if kind == "renda_extra":
+            extra = sum(
+                r["amount_cents"] for r in rows_atual
+                if r["status"] == "confirmed" and r["kind"] == "income" and r["income_source_name"] != "Salário"
+            )
+            return goals_core.evaluate_renda_extra(extra, g["target_cents"])
+        if kind == "saldo_positivo_seguido":
+            saldos = _saldos_ultimos_meses(ano, mes, g["target_months"])
+            streak = consecutive_positive_streak(saldos)
+            return goals_core.evaluate_saldo_positivo_seguido(streak, g["target_months"])
+        raise ValueError(f"Tipo de objetivo desconhecido: {kind!r}")
+
+    def _texto_progresso(g: sqlite3.Row, p: goals_core.GoalProgress) -> str:
+        if g["kind"] == "saldo_positivo_seguido":
+            return f"{p.current} de {p.target} meses seguidos com saldo positivo"
+        if g["kind"] == "reducao_categoria":
+            return f"{format_brl(p.current)} este mês · era {format_brl(p.target)} no mês passado"
+        return f"{format_brl(p.current)} de {format_brl(p.target)}"
+
+    def card_missao(g: sqlite3.Row, p: goals_core.GoalProgress) -> ft.Control:
+        cor = _COR_RECORDE if p.achieved else _COR_OFENSIVA
+        return ft.Container(
+            content=ft.Column([
+                ft.Row([
+                    ft.Icon(_ICONES_OBJETIVO.get(g["kind"], _ICONE_PADRAO), color=cor, size=22),
+                    ft.Text(g["label"], weight=ft.FontWeight.BOLD, expand=True),
+                    ft.Container(
+                        content=ft.Text(
+                            "PR!" if p.achieved else "Ativo", size=11, weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.BLACK,
+                        ),
+                        bgcolor=cor, border_radius=100,
+                        padding=ft.Padding(left=10, right=10, top=3, bottom=3),
+                    ),
+                ], spacing=8),
+                ft.ProgressBar(value=p.ratio, color=cor, bgcolor=ft.Colors.GREY_800, border_radius=8, bar_height=10),
+                ft.Text(_texto_progresso(g, p), size=12, color=ft.Colors.GREY),
+            ], spacing=10),
+            padding=16, border_radius=20, bgcolor=ft.Colors.GREY_900,
+            animate=ft.Animation(300, ft.AnimationCurve.EASE_OUT),
+        )
+
+    def card_pr(r: sqlite3.Row) -> ft.Control:
+        return ft.Container(
+            content=ft.Column(
+                [
+                    ft.Icon(ft.Icons.EMOJI_EVENTS_ROUNDED, color=_COR_RECORDE, size=24),
+                    ft.Text(
+                        r["goal_label"], size=11, weight=ft.FontWeight.BOLD, max_lines=2,
+                        overflow=ft.TextOverflow.ELLIPSIS, text_align=ft.TextAlign.CENTER,
+                    ),
+                    ft.Text(f"{r['year_month'][5:7]}/{r['year_month'][0:4]}", size=10, color=ft.Colors.GREY),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4, tight=True,
+            ),
+            width=110, padding=12, border_radius=16,
+            bgcolor=ft.Colors.with_opacity(0.12, _COR_RECORDE),
+            border=ft.Border.all(1, _COR_RECORDE),
+        )
+
+    def cabecalho_atleta(ofensiva: int, batidos: int, total: int) -> ft.Control:
+        return ft.Container(
+            content=ft.Row(
+                [
+                    ft.Column(
+                        [
+                            ft.Row(
+                                [
+                                    ft.Icon(ft.Icons.LOCAL_FIRE_DEPARTMENT_ROUNDED, color=_COR_OFENSIVA, size=30),
+                                    ft.Text(str(ofensiva), size=30, weight=ft.FontWeight.BOLD),
+                                ],
+                                spacing=4, tight=True,
+                            ),
+                            ft.Text("meses de ofensiva", size=12, color=ft.Colors.GREY),
+                        ],
+                        spacing=0, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                    ft.VerticalDivider(),
+                    ft.Column(
+                        [
+                            ft.Text(f"{batidos}/{total}", size=30, weight=ft.FontWeight.BOLD, color=_COR_RECORDE),
+                            ft.Text("objetivos batidos este mês", size=12, color=ft.Colors.GREY),
+                        ],
+                        spacing=0, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_EVENLY,
+            ),
+            padding=20, border_radius=20, bgcolor=ft.Colors.GREY_900,
+        )
+
+    def montar_objetivos() -> None:
+        page.navigation_bar.selected_index = 2
+        page.appbar = ft.AppBar(
+            leading=ft.IconButton(icon=ft.Icons.MENU, on_click=abrir_menu),
+            title=ft.Text("Objetivos"),
+        )
+        page.floating_action_button = ft.FloatingActionButton(
+            icon=ft.Icons.ADD, bgcolor=_COR_OFENSIVA, on_click=lambda e: abrir_dialog_objetivo(),
+        )
+
+        ano, mes = hoje.year, hoje.month
+        ano_ant, mes_ant = previous_month(ano, mes)
+        rows_atual = repo.list_month(conn, ano, mes)
+        rows_anterior = repo.list_month(conn, ano_ant, mes_ant)
+        year_month = f"{ano:04d}-{mes:02d}"
+
+        objetivos = goals_repo.list_active(conn)
+        progresso: list[tuple[sqlite3.Row, goals_core.GoalProgress]] = []
+        for g in objetivos:
+            p = _avaliar_objetivo(g, rows_atual, rows_anterior, ano, mes)
+            goals_repo.record_result(conn, g["id"], year_month, p.achieved)
+            progresso.append((g, p))
+
+        ofensiva = goals_core.overall_streak(goals_repo.monthly_any_achieved(conn))
+        recentes = goals_repo.recent_achievements(conn, limit=8)
+        batidos = sum(1 for _, p in progresso if p.achieved)
+
+        secoes: list[ft.Control] = [
+            cabecalho_atleta(ofensiva, batidos, len(progresso)),
+            ft.Container(height=4),
+        ]
+        if recentes:
+            secoes += [
+                ft.Text("Recordes recentes", size=13, weight=ft.FontWeight.BOLD, color=_COR_RECORDE),
+                ft.Row([card_pr(r) for r in recentes], scroll=ft.ScrollMode.AUTO, spacing=10),
+                ft.Container(height=4),
+            ]
+        secoes.append(ft.Text("Missões do mês", size=15, weight=ft.FontWeight.BOLD))
+        if progresso:
+            secoes.append(ft.Column([card_missao(g, p) for g, p in progresso], spacing=10))
+        else:
+            secoes.append(ft.Text(
+                "Nenhum objetivo ativo. Toque em + para criar um.", italic=True, color=ft.Colors.GREY,
+            ))
+
+        body.controls = [ft.Column(secoes, spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)]
+        page.update()
+
+    def abrir_dialog_objetivo() -> None:
+        kind_map = {
+            "Manter uma categoria abaixo de um teto": "teto_categoria",
+            "Diminuir uma categoria vs. mês passado": "reducao_categoria",
+            "Gerar renda extra (fora do salário)": "renda_extra",
+            "Acumular meses seguidos de saldo positivo": "saldo_positivo_seguido",
+        }
+        tipo_dd = ft.Dropdown(
+            label="Tipo de objetivo",
+            options=[ft.DropdownOption(key=k, text=k) for k in kind_map],
+        )
+        categoria_dd = ft.Dropdown(
+            label="Categoria",
+            options=[
+                ft.DropdownOption(key=str(c["id"]), text=c["name"])
+                for c in categories_repo.list_active(conn)
+            ],
+            visible=False,
+        )
+        valor_alvo = ft.TextField(label="Valor alvo (R$)", visible=False)
+        meses_alvo = ft.TextField(label="Meses seguidos", visible=False)
+        label_campo = ft.TextField(label="Nome do objetivo (opcional)")
+        erro = ft.Text(color=ft.Colors.RED, visible=False)
+
+        def ao_trocar_tipo(_e) -> None:
+            kind = kind_map.get(tipo_dd.value)
+            categoria_dd.visible = kind in ("teto_categoria", "reducao_categoria")
+            valor_alvo.visible = kind in ("teto_categoria", "renda_extra")
+            meses_alvo.visible = kind == "saldo_positivo_seguido"
+            page.update()
+
+        tipo_dd.on_select = ao_trocar_tipo
+
+        def fechar() -> None:
+            page.pop_dialog()
+
+        def salvar(_e) -> None:
+            kind = kind_map.get(tipo_dd.value)
+            erro.visible = False
+            if kind is None:
+                erro.value = "Escolha o tipo de objetivo."
+                erro.visible = True
+                page.update()
+                return
+            category_id = int(categoria_dd.value) if categoria_dd.visible and categoria_dd.value else None
+            if categoria_dd.visible and category_id is None:
+                erro.value = "Escolha a categoria."
+                erro.visible = True
+                page.update()
+                return
+            target_cents = None
+            if valor_alvo.visible:
+                try:
+                    target_cents = parse_brl(valor_alvo.value or "")
+                    if target_cents <= 0:
+                        raise ValueError
+                except ValueError:
+                    erro.value = "Informe um valor alvo válido."
+                    erro.visible = True
+                    page.update()
+                    return
+            target_months = None
+            if meses_alvo.visible:
+                try:
+                    target_months = int(meses_alvo.value or "0")
+                except ValueError:
+                    target_months = 0
+                if target_months <= 0:
+                    erro.value = "Informe quantos meses seguidos."
+                    erro.visible = True
+                    page.update()
+                    return
+            nome_categoria = next(
+                (c["name"] for c in categories_repo.list_active(conn) if c["id"] == category_id), None,
+            )
+            label = (label_campo.value or "").strip() or _rotulo_padrao(kind, nome_categoria, target_cents, target_months)
+            goals_repo.add(
+                conn, kind=kind, label=label, category_id=category_id,
+                target_cents=target_cents, target_months=target_months,
+            )
+            fechar()
+            montar_objetivos()
+
+        page.show_dialog(ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Novo objetivo"),
+            content=ft.Column(
+                [tipo_dd, categoria_dd, valor_alvo, meses_alvo, label_campo, erro],
+                tight=True, spacing=10, width=380,
+            ),
+            actions=[
+                ft.TextButton("Cancelar", on_click=lambda e: fechar()),
+                ft.FilledButton("Salvar", on_click=salvar),
+            ],
+        ))
+
+    def _rotulo_padrao(kind: str, categoria: str | None, target_cents: int | None, target_months: int | None) -> str:
+        if kind == "teto_categoria":
+            return f"Manter {categoria} abaixo de {format_brl(target_cents)}"
+        if kind == "reducao_categoria":
+            return f"Diminuir {categoria} vs. mês passado"
+        if kind == "renda_extra":
+            return f"Gerar {format_brl(target_cents)} de renda extra"
+        if kind == "saldo_positivo_seguido":
+            return f"Acumular {target_months} meses de saldo positivo"
+        return "Objetivo"
+
+    tema_claro_switch = ft.Switch(value=(tema_salvo == "light"))
+
+    def alternar_tema(_e) -> None:
+        claro = tema_claro_switch.value
+        page.theme_mode = ft.ThemeMode.LIGHT if claro else ft.ThemeMode.DARK
+        goals_repo.set_setting(conn, "theme_mode", "light" if claro else "dark")
+        page.update()
+
+    tema_claro_switch.on_change = alternar_tema
+
     def montar_config() -> None:
         page.appbar = ft.AppBar(
             leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_home()),
@@ -1070,6 +1641,9 @@ def main(page: ft.Page) -> None:
         page.floating_action_button = None
         body.controls = [
             ft.Column([
+                ft.Text("Aparência", size=13, weight=ft.FontWeight.BOLD),
+                ft.Row([tema_claro_switch, ft.Text("Tema claro")], spacing=8),
+                ft.Divider(),
                 ft.Text("Backup", size=13, weight=ft.FontWeight.BOLD),
                 ft.Text(
                     "Copia o banco de dados inteiro (lançamentos, categorias, recorrentes) "

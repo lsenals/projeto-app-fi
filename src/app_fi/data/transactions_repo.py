@@ -184,5 +184,15 @@ def list_categories(conn: sqlite3.Connection) -> list[sqlite3.Row]:
 
 def list_income_sources(conn: sqlite3.Connection) -> list[sqlite3.Row]:
     return conn.execute(
-        "SELECT id, name FROM income_sources WHERE archived = 0 ORDER BY id"
+        "SELECT id, name, sort_order FROM income_sources "
+        "WHERE archived = 0 ORDER BY sort_order, id"
     ).fetchall()
+
+
+def reorder_income_sources(conn: sqlite3.Connection, ordered_ids: list[int]) -> None:
+    """Grava a nova ordem (arrastar-e-soltar na tela de Lançar)."""
+    conn.executemany(
+        "UPDATE income_sources SET sort_order = ? WHERE id = ?",
+        [(i, source_id) for i, source_id in enumerate(ordered_ids)],
+    )
+    conn.commit()

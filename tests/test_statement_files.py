@@ -3,6 +3,7 @@
 import datetime
 
 import openpyxl
+import pytest
 
 from app_fi.data.statement_files import read_csv, read_statement, read_xlsx
 
@@ -23,6 +24,28 @@ def test_read_csv_parses_header_and_rows(tmp_path):
     assert len(rows) == 1
     assert rows[0]["Descrição"] == "LOJA TESTE"
     assert rows[0]["Valor (em R$)"] == "99.90"
+
+
+def test_read_csv_falls_back_to_cp1252(tmp_path):
+    # exportação de banco em Windows-1252/Latin-1 (comum), não UTF-8
+    path = tmp_path / "fatura.csv"
+    conteudo = ";".join(_HEADER) + "\n" + (
+        "10/08/2026;FULANO DE TAL;0000;Educacional;LOJA TESTE ção;Única;0;0;99.90\n"
+    )
+    path.write_bytes(conteudo.encode("cp1252"))
+
+    rows = read_csv(path)
+    assert rows[0]["Descrição"] == "LOJA TESTE ção"
+
+
+def test_read_csv_raises_readable_error_for_unsupported_encoding(tmp_path):
+    path = tmp_path / "fatura.csv"
+    # 0x81 não existe nem em utf-8 nem em cp1252 (cp1252 mapeia quase todo byte,
+    # então um arquivo aleatório raramente falha nos dois ao mesmo tempo)
+    path.write_bytes(b"Data de Compra\x81\xff")
+
+    with pytest.raises(ValueError):
+        read_csv(path)
 
 
 def test_read_xlsx_parses_header_and_rows(tmp_path):

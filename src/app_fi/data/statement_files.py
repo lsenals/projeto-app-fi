@@ -24,8 +24,17 @@ def _cell_to_str(value: object) -> str:
 
 
 def read_csv(path: str | Path) -> list[dict]:
-    with open(path, encoding="utf-8-sig", newline="") as f:
-        return list(csv.DictReader(f, delimiter=";"))
+    # bancos brasileiros costumam exportar em Windows-1252/Latin-1, não UTF-8 —
+    # tenta UTF-8 primeiro (o mais comum hoje) e cai para cp1252 se não decodificar.
+    for encoding in ("utf-8-sig", "cp1252"):
+        try:
+            with open(path, encoding=encoding, newline="") as f:
+                return list(csv.DictReader(f, delimiter=";"))
+        except UnicodeDecodeError:
+            continue
+    raise ValueError(
+        "Não foi possível ler o arquivo com as codificações suportadas (UTF-8, Windows-1252)."
+    )
 
 
 def read_xlsx(path: str | Path) -> list[dict]:
