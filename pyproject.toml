@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "app-fi"
 version = "0.1.0"
-description = "App financeiro pessoal em Python + Flet"
+description = "FinApple — app financeiro pessoal e gamificado em Python + Flet"
 readme = "README.md"
 requires-python = ">=3.13"
 license = { file = "LICENSE" }

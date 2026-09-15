@@ -1,2 +1,3 @@
-# projeto-app-fi
-Projeto pessoal FI.
+# FinApple
+
+App financeiro pessoal e gamificado, em Python + Flet. Repositório: `projeto-app-fi`.

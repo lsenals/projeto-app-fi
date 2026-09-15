@@ -1,11 +1,12 @@
-"""App FI — ponto de entrada.
+"""FinApple — ponto de entrada.
 
 Passos 3-5 fecham a v1 planejada (dialog, drawer+Categorias, Fechamento,
 Exportar/backup). Depois: importar fatura de cartão (CSV/XLSX do C6 Bank) com
-revisão manual, navegação entre meses, e agora estabelecimento no lançamento
-manual (finalmente usa a memória de `payees`) + tela de Recorrentes que
-modela e prevê término, sem ainda criar lançamento sozinha — isso é o motor
-de materialização, trabalho futuro.
+revisão manual, navegação entre meses, estabelecimento no lançamento manual
+(finalmente usa a memória de `payees`) + tela de Recorrentes que modela e
+prevê término, sem ainda criar lançamento sozinha — isso é o motor de
+materialização, trabalho futuro. Depois disso: UI gamificada (Lançar +
+Objetivos) e, agora, a identidade visual FinApple (era "App FI").
 """
 
 import asyncio
@@ -43,9 +44,12 @@ _MESES = [
     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ]
 
-# cores neon do tema "fitness financeiro" — recordes batidos e ofensiva ativa
-_COR_RECORDE = "#39FF14"
-_COR_OFENSIVA = "#FF7A00"
+# Identidade visual FinApple — abacaxi: a "coroa" remete a vitória/recordes,
+# verde e dourado vêm da própria fruta. Ver brand book em Obsidian > 06-Projects.
+_COR_PRIMARIA = "#00E676"      # verde esmeralda/limão — destaques, sucesso, botões
+_COR_SECUNDARIA = "#FFD600"    # amarelo dourado/neon — ofensiva, PRs, moedas
+_COR_FUNDO = ft.Colors.BLUE_GREY_900       # carbono — fundo do app
+_COR_SUPERFICIE = ft.Colors.BLUE_GREY_800  # carbono, um tom mais claro — cards/superfícies
 
 _ICONES_CATEGORIA = {
     "Moradia": ft.Icons.HOME_ROUNDED,
@@ -87,7 +91,7 @@ def _formatar_mes_ano(iso: str) -> str:
 
 
 def main(page: ft.Page) -> None:
-    page.title = "App FI"
+    page.title = "FinApple"
     page.padding = 20
     conn = get_db()
     hoje = dt.date.today()
@@ -95,8 +99,44 @@ def main(page: ft.Page) -> None:
     tema_salvo = goals_repo.get_setting(conn, "theme_mode", default="dark")
     page.theme_mode = ft.ThemeMode.LIGHT if tema_salvo == "light" else ft.ThemeMode.DARK
 
+    # Identidade visual FinApple: verde primário + dourado secundário sobre
+    # fundo carbono no escuro (a base da marca); o claro herda os mesmos
+    # destaques pra não perder identidade quando o usuário alterna o tema.
+    page.dark_theme = ft.Theme(
+        color_scheme=ft.ColorScheme(
+            primary=_COR_PRIMARIA, on_primary=ft.Colors.BLACK,
+            secondary=_COR_SECUNDARIA, on_secondary=ft.Colors.BLACK,
+            surface=_COR_FUNDO, on_surface=ft.Colors.WHITE,
+            surface_container=_COR_SUPERFICIE, surface_container_high=_COR_SUPERFICIE,
+        ),
+        scaffold_bgcolor=_COR_FUNDO,
+    )
+    page.theme = ft.Theme(
+        color_scheme=ft.ColorScheme(
+            primary=_COR_PRIMARIA, on_primary=ft.Colors.BLACK,
+            secondary=_COR_SECUNDARIA, on_secondary=ft.Colors.BLACK,
+        ),
+    )
+
     body = ft.Column(expand=True)
     page.add(body)
+
+    def cabecalho_finapple() -> ft.Control:
+        """Header/AppBar com a identidade da marca — a "coroa" do abacaxi como
+        ícone de conquista, nome em duas cores (Fin verde, Apple dourado)."""
+        return ft.Row(
+            [
+                ft.Icon(ft.Icons.WORKSPACE_PREMIUM_ROUNDED, color=_COR_SECUNDARIA, size=26),
+                ft.Row(
+                    [
+                        ft.Text("Fin", size=20, weight=ft.FontWeight.BOLD, color=_COR_PRIMARIA),
+                        ft.Text("Apple", size=20, weight=ft.FontWeight.BOLD, color=_COR_SECUNDARIA),
+                    ],
+                    spacing=0,
+                ),
+            ],
+            spacing=8,
+        )
 
     # -------------------------------------------------------- navegação (bottom bar)
 
@@ -236,7 +276,7 @@ def main(page: ft.Page) -> None:
         page.navigation_bar.selected_index = 0
         page.appbar = ft.AppBar(
             leading=ft.IconButton(icon=ft.Icons.MENU, on_click=abrir_menu),
-            title=ft.Text("App FI"),
+            title=cabecalho_finapple(),
             actions=[
                 ft.IconButton(
                     icon=ft.Icons.UPLOAD_FILE,
@@ -269,7 +309,7 @@ def main(page: ft.Page) -> None:
             lista,
         ]
         page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.ADD, bgcolor=_COR_OFENSIVA, on_click=lambda e: ir_para(1),
+            icon=ft.Icons.ADD, bgcolor=_COR_PRIMARIA, on_click=lambda e: ir_para(1),
         )
         atualizar()
 
@@ -628,7 +668,7 @@ def main(page: ft.Page) -> None:
                 f"{ignorados} linha(s) deixada(s) de fora (desmarcada(s) na revisão).",
                 size=12, color=ft.Colors.GREY,
             ))
-        _mostrar_pop_up("Fatura importada", ft.Icons.CHECK_CIRCLE_ROUNDED, _COR_RECORDE, detalhes)
+        _mostrar_pop_up("Fatura importada", ft.Icons.CHECK_CIRCLE_ROUNDED, _COR_PRIMARIA, detalhes)
 
     def montar_revisao_importacao() -> None:
         page.appbar = ft.AppBar(
@@ -1206,7 +1246,7 @@ def main(page: ft.Page) -> None:
         texto_botao = ft.Text("Registrar", size=16, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK)
         botao_confirmar = ft.Container(
             content=texto_botao,
-            bgcolor=_COR_OFENSIVA,
+            bgcolor=_COR_PRIMARIA,
             border_radius=100,
             padding=ft.Padding(left=24, right=24, top=16, bottom=16),
             alignment=ft.Alignment.CENTER,
@@ -1230,7 +1270,7 @@ def main(page: ft.Page) -> None:
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4, tight=True,
                 ),
                 width=74, height=74,
-                bgcolor=_COR_OFENSIVA if selecionado else ft.Colors.GREY_900,
+                bgcolor=_COR_PRIMARIA if selecionado else _COR_SUPERFICIE,
                 border_radius=18,
                 alignment=ft.Alignment.CENTER,
                 animate=ft.Animation(180, ft.AnimationCurve.EASE_OUT),
@@ -1326,15 +1366,16 @@ def main(page: ft.Page) -> None:
                     income_source_id=escolhido["valor"], payee_id=payee_id,
                 )
 
-            # feedback visual instantâneo: botão pisca verde, depois limpa pro próximo lançamento
-            botao_confirmar.bgcolor = _COR_RECORDE
+            # feedback visual instantâneo: botão pisca dourado (like a coin), depois volta
+            # ao verde primário pro próximo lançamento
+            botao_confirmar.bgcolor = _COR_SECUNDARIA
             texto_botao.value = "Registrado!"
             page.update()
             await asyncio.sleep(0.6)
             valor.value = ""
             estabelecimento.value = ""
             escolhido["valor"] = None
-            botao_confirmar.bgcolor = _COR_OFENSIVA
+            botao_confirmar.bgcolor = _COR_PRIMARIA
             texto_botao.value = "Registrar"
             montar_grid()
             await valor.focus()
@@ -1347,7 +1388,7 @@ def main(page: ft.Page) -> None:
             ft.Text("Novo lançamento", size=20, weight=ft.FontWeight.BOLD),
             tipo,
             ft.Container(
-                content=valor, padding=16, border_radius=20, bgcolor=ft.Colors.GREY_900,
+                content=valor, padding=16, border_radius=20, bgcolor=_COR_SUPERFICIE,
                 alignment=ft.Alignment.CENTER,
             ),
             ft.Text("Categoria" if kind["valor"] == "expense" else "Origem", size=12, color=ft.Colors.GREY),
@@ -1397,7 +1438,8 @@ def main(page: ft.Page) -> None:
         return f"{format_brl(p.current)} de {format_brl(p.target)}"
 
     def card_missao(g: sqlite3.Row, p: goals_core.GoalProgress) -> ft.Control:
-        cor = _COR_RECORDE if p.achieved else _COR_OFENSIVA
+        # batido = dourado (PR); ainda ativo = verde primário (crescendo rumo à meta)
+        cor = _COR_SECUNDARIA if p.achieved else _COR_PRIMARIA
         return ft.Container(
             content=ft.Column([
                 ft.Row([
@@ -1415,7 +1457,7 @@ def main(page: ft.Page) -> None:
                 ft.ProgressBar(value=p.ratio, color=cor, bgcolor=ft.Colors.GREY_800, border_radius=8, bar_height=10),
                 ft.Text(_texto_progresso(g, p), size=12, color=ft.Colors.GREY),
             ], spacing=10),
-            padding=16, border_radius=20, bgcolor=ft.Colors.GREY_900,
+            padding=16, border_radius=20, bgcolor=_COR_SUPERFICIE,
             animate=ft.Animation(300, ft.AnimationCurve.EASE_OUT),
         )
 
@@ -1423,7 +1465,7 @@ def main(page: ft.Page) -> None:
         return ft.Container(
             content=ft.Column(
                 [
-                    ft.Icon(ft.Icons.EMOJI_EVENTS_ROUNDED, color=_COR_RECORDE, size=24),
+                    ft.Icon(ft.Icons.EMOJI_EVENTS_ROUNDED, color=_COR_SECUNDARIA, size=24),
                     ft.Text(
                         r["goal_label"], size=11, weight=ft.FontWeight.BOLD, max_lines=2,
                         overflow=ft.TextOverflow.ELLIPSIS, text_align=ft.TextAlign.CENTER,
@@ -1433,8 +1475,8 @@ def main(page: ft.Page) -> None:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=4, tight=True,
             ),
             width=110, padding=12, border_radius=16,
-            bgcolor=ft.Colors.with_opacity(0.12, _COR_RECORDE),
-            border=ft.Border.all(1, _COR_RECORDE),
+            bgcolor=ft.Colors.with_opacity(0.12, _COR_SECUNDARIA),
+            border=ft.Border.all(1, _COR_SECUNDARIA),
         )
 
     def cabecalho_atleta(ofensiva: int, batidos: int, total: int) -> ft.Control:
@@ -1445,7 +1487,7 @@ def main(page: ft.Page) -> None:
                         [
                             ft.Row(
                                 [
-                                    ft.Icon(ft.Icons.LOCAL_FIRE_DEPARTMENT_ROUNDED, color=_COR_OFENSIVA, size=30),
+                                    ft.Icon(ft.Icons.LOCAL_FIRE_DEPARTMENT_ROUNDED, color=_COR_SECUNDARIA, size=30),
                                     ft.Text(str(ofensiva), size=30, weight=ft.FontWeight.BOLD),
                                 ],
                                 spacing=4, tight=True,
@@ -1457,7 +1499,7 @@ def main(page: ft.Page) -> None:
                     ft.VerticalDivider(),
                     ft.Column(
                         [
-                            ft.Text(f"{batidos}/{total}", size=30, weight=ft.FontWeight.BOLD, color=_COR_RECORDE),
+                            ft.Text(f"{batidos}/{total}", size=30, weight=ft.FontWeight.BOLD, color=_COR_SECUNDARIA),
                             ft.Text("objetivos batidos este mês", size=12, color=ft.Colors.GREY),
                         ],
                         spacing=0, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -1465,7 +1507,7 @@ def main(page: ft.Page) -> None:
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_EVENLY,
             ),
-            padding=20, border_radius=20, bgcolor=ft.Colors.GREY_900,
+            padding=20, border_radius=20, bgcolor=_COR_SUPERFICIE,
         )
 
     def montar_objetivos() -> None:
@@ -1475,7 +1517,7 @@ def main(page: ft.Page) -> None:
             title=ft.Text("Objetivos"),
         )
         page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.ADD, bgcolor=_COR_OFENSIVA, on_click=lambda e: abrir_dialog_objetivo(),
+            icon=ft.Icons.ADD, bgcolor=_COR_PRIMARIA, on_click=lambda e: abrir_dialog_objetivo(),
         )
 
         ano, mes = hoje.year, hoje.month
@@ -1501,7 +1543,7 @@ def main(page: ft.Page) -> None:
         ]
         if recentes:
             secoes += [
-                ft.Text("Recordes recentes", size=13, weight=ft.FontWeight.BOLD, color=_COR_RECORDE),
+                ft.Text("Recordes recentes", size=13, weight=ft.FontWeight.BOLD, color=_COR_SECUNDARIA),
                 ft.Row([card_pr(r) for r in recentes], scroll=ft.ScrollMode.AUTO, spacing=10),
                 ft.Container(height=4),
             ]

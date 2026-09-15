@@ -1,4 +1,5 @@
 @echo off
+title FinApple
 cd /d "%~dp0"
 call .venv\Scripts\activate.bat
 python src\app_fi\main.py

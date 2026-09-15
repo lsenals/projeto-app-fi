@@ -1,4 +1,10 @@
-# CLAUDE.md — App FI
+# CLAUDE.md — FinApple
+
+O produto se chama **FinApple** (nome + identidade visual definidos em 2026-09-15,
+detalhes em Obsidian > 06-Projects > FinApple — Identidade Visual). O repositório,
+pacote Python (`app_fi`) e pasta de dados do usuário (`%LOCALAPPDATA%\app-fi`)
+continuam com o nome técnico antigo — renomear isso é uma decisão à parte, ainda
+não tomada, porque implicaria migrar dados de quem já usa o app.
 
 Projeto pessoal: app financeiro mobile em **Python + Flet**. Sem lançamento oficial nem
 equipe planejados, mas o objetivo é levar até um estado "pronto para lançar" — ou seja,
