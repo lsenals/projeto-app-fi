@@ -13,6 +13,11 @@ O caminho do banco pode ser sobrescrito pela variável de ambiente
 ``APP_FI_DATA_DIR`` (usada nos testes e para rodar contra um banco descartável).
 """
 
+# Nota mobile: em Android/iOS não existe %LOCALAPPDATA%. Um app empacotado via
+# `flet build` expõe o diretório de dados correto (sandbox do app) na variável
+# de ambiente `FLET_APP_STORAGE_DATA`, sincronamente — sem precisar de
+# `ft.StoragePaths` (que é assíncrono e depende de uma `page` já rodando).
+
 from __future__ import annotations
 
 import os
@@ -28,15 +33,22 @@ _MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "migrations"
 def default_db_path() -> Path:
     """Resolve o caminho do banco e garante que a pasta exista.
 
-    Ordem: ``APP_FI_DATA_DIR`` (se definida) -> ``%LOCALAPPDATA%\\app-fi`` ->
-    ``~/AppData/Local/app-fi`` como fallback fora do Windows.
+    Ordem: ``APP_FI_DATA_DIR`` (se definida, usada nos testes) ->
+    ``FLET_APP_STORAGE_DATA`` (definida automaticamente pelo Flet num app
+    empacotado — Android/iOS/macOS/Linux) -> ``%LOCALAPPDATA%\\app-fi`` como
+    fallback do modo desenvolvimento no Windows (`python src/app_fi/main.py`
+    direto, sem empacotar, onde nenhuma das duas variáveis acima existe).
     """
     override = os.environ.get("APP_FI_DATA_DIR")
     if override:
         root = Path(override)
     else:
-        local = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
-        root = Path(local) / APP_DIR_NAME
+        storage_data = os.environ.get("FLET_APP_STORAGE_DATA")
+        if storage_data:
+            root = Path(storage_data)
+        else:
+            local = os.environ.get("LOCALAPPDATA") or str(Path.home() / "AppData" / "Local")
+            root = Path(local) / APP_DIR_NAME
     root.mkdir(parents=True, exist_ok=True)
     return root / DB_FILENAME
 

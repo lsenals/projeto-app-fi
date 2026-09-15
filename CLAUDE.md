@@ -80,5 +80,18 @@ de notas. Ambos ficam abertos juntos no workspace `app-fi.code-workspace`.
   feita, mudar de framework é uma decisão grande, não um detalhe de implementação.
 - Não commitar chaves, tokens ou dados financeiros reais de exemplo — usar dados fictícios
   em qualquer teste/demo.
-- Não empacotar para mobile (`flet build apk/ipa`) até o app ter uma funcionalidade mínima
-  completa — builds mobile são lentos e não vale iterar por esse caminho ainda.
+
+## Mobile
+
+**v1.0.0 (2026-09-15) fechou o escopo desktop/web** — a partir daqui, mobile (Android
+primeiro, iOS depois) é o próximo passo real, não mais bloqueado. Já corrigidos os dois
+pontos do código que dependiam do Windows: `data/db.py::default_db_path()` (usa
+`FLET_APP_STORAGE_DATA`, que o Flet expõe automaticamente num app empacotado, antes de
+cair no fallback `%LOCALAPPDATA%`) e o "abrir relatório exportado" em `main.py` (usa
+`os.startfile` só no Windows; `page.launch_url()` nas outras plataformas).
+
+`flet build apk` roda em qualquer SO com Flutter + Android SDK instalados — dá pra gerar o
+APK direto no Windows. `flet build ipa` exige macOS com Xcode; sem isso, iOS fica pra depois
+(Mac físico ou CI com runner macOS). Builds mobile ainda são lentos pra iterar — prefira
+testar via `ft.AppView.WEB_BROWSER`/desktop primeiro e só buildar pra Android quando quiser
+validar algo que só existe no dispositivo de verdade (permissões, file picker nativo, etc.).

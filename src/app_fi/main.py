@@ -734,10 +734,15 @@ def main(page: ft.Page) -> None:
             gerado_em=dt.datetime.now().strftime("%d/%m/%Y %H:%M"),
         )
         path = backup.write_html_report(html, d["ano"], d["mes"])
-        try:
-            os.startfile(path)  # abre no navegador padrão, como a spec pede
-        except OSError:
-            pass  # sem programa associado a .html; o arquivo já está salvo
+        if page.platform == ft.PagePlatform.WINDOWS:
+            try:
+                os.startfile(path)  # abre no navegador padrão, como a spec pede
+            except OSError:
+                pass  # sem programa associado a .html; o arquivo já está salvo
+        else:
+            # fora do Windows não há "abrir no programa padrão" via os.startfile;
+            # launch_url deixa a plataforma decidir como abrir o arquivo local.
+            page.launch_url(path.as_uri())
         confirmar(f"Relatório salvo em {path}")
 
     def exportar_csv(_e) -> None:
