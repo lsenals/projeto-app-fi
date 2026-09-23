@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-23T15:52:41Z",
+  "title": "Design System: FinApple",
+  "extensions": {
+    "colorMeta": {
+      "verde-cofre": {
+        "role": "primary",
+        "displayName": "Verde Cofre",
+        "canonical": "#00E676",
+        "tonalRamp": ["#00390F", "#00551A", "#007225", "#008F30", "#00AC3B", "#00C947", "#00E676", "#5BFFA3"]
+      },
+      "dourado-conquista": {
+        "role": "secondary",
+        "displayName": "Dourado Conquista",
+        "canonical": "#FFD600",
+        "tonalRamp": ["#3D3300", "#5C4D00", "#7A6600", "#998000", "#B89900", "#D6B300", "#FFD600", "#FFE666"]
+      },
+      "azul-confianca": {
+        "role": "tertiary",
+        "displayName": "Azul Confiança",
+        "canonical": "#40C4FF",
+        "tonalRamp": ["#00293D", "#003D5C", "#00517A", "#006699", "#007AB8", "#1FA3E8", "#40C4FF", "#8CDBFF"]
+      },
+      "carbono-fundo": {
+        "role": "neutral",
+        "displayName": "Carbono Fundo",
+        "canonical": "#263238",
+        "tonalRamp": ["#0D1114", "#151B1E", "#1C2428", "#263238", "#37474F", "#546069", "#78878F", "#A6B3B9"]
+      },
+      "carbono-superficie": {
+        "role": "neutral",
+        "displayName": "Carbono Superfície",
+        "canonical": "#37474F",
+        "tonalRamp": ["#151B1E", "#1C2428", "#263238", "#37474F", "#455A64", "#607D8B", "#90A4AE", "#CFD8DC"]
+      },
+      "receita": {
+        "role": "semantic",
+        "displayName": "Receita (verde financeiro, não é Verde Cofre)",
+        "canonical": "#4CAF50",
+        "tonalRamp": ["#1B5E20", "#2E7D32", "#388E3C", "#43A047", "#4CAF50", "#66BB6A", "#81C784", "#A5D6A7"]
+      },
+      "despesa-erro": {
+        "role": "semantic",
+        "displayName": "Despesa/Erro (vermelho financeiro)",
+        "canonical": "#F44336",
+        "tonalRamp": ["#B71C1C", "#C62828", "#D32F2F", "#E53935", "#F44336", "#EF5350", "#E57373", "#FFCDD2"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Único número de maior destaque de uma tela — hoje só o contador de ofensiva." },
+      "headline": { "displayName": "Headline", "purpose": "Saldo do mês, valores em cards brancos, wordmark FinApple." },
+      "title": { "displayName": "Title", "purpose": "Saudação da Home, títulos de diálogo." },
+      "body": { "displayName": "Body", "purpose": "Conteúdo padrão, rótulos de card, texto de progresso." },
+      "label": { "displayName": "Label", "purpose": "Legendas, datas, texto de apoio secundário." }
+    },
+    "shadows": [
+      { "name": "floating-card", "value": "blur_radius: 16, spread_radius: 1, color: rgba(0,0,0,0.25), offset: 0 4", "purpose": "Exclusivo dos 2 cards brancos do Painel de Finanças — contraste deliberado de marca, não um padrão geral de elevação." }
+    ]
+  },
+  "components": [],
+  "narrative": {
+    "northStar": "O Cofre Descontraído",
+    "overview": "FinApple trata dinheiro a sério sem parecer um banco. A base é um dark mode carbono — quase um cofre discreto — onde a maior parte da interface fica quieta, em tons de cinza-azulado, e a cor só aparece nos momentos que importam: um botão de ação, um PR batido, uma barra de progresso subindo. O abacaxi mascote e a gamificação (Nível, ofensiva, PRs) trazem calor e personalidade sem infantilizar — a tipografia é sólida, os números são grandes e diretos, e nada compete com a leitura clara de quanto dinheiro entrou, saiu ou falta pra bater a meta.\n\nOs dois cards brancos do Painel de Finanças são a única exceção deliberada a esse fundo escuro: eles \"flutuam\" com sombra sobre o carbono, um contraste de marca proposital, não uma inconsistência. Fora deles, profundidade vem de tom (superfície um degrau mais clara que o fundo), nunca de sombra.",
+    "keyCharacteristics": [
+      "Dark carbono como base; cor é reservada para ação e conquista, não decoração.",
+      "Tipografia direta e confiante — números financeiros sempre em destaque (bold, tamanho maior).",
+      "Um único par de cards brancos \"flutuando\" é a exceção de contraste da marca, não o padrão.",
+      "Cantos generosos em cards de conteúdo (20), pílulas fechadas em badges/emblemas (100)."
+    ],
+    "rules": [
+      { "name": "The One Job Rule", "body": "Verde é sempre ação/progresso; dourado é sempre recompensa/conquista já alcançada; azul é sempre leitura neutra. Nenhuma dessas três cores de acento cobre mais de um papel.", "section": "colors" },
+      { "name": "The Financial Semantics Are Separate Rule", "body": "Receita usa Colors.GREEN e despesa usa Colors.RED — cores padrão do Material, deliberadamente diferentes do Verde Cofre da marca. Não trocar por cores de marca só por consistência.", "section": "colors" },
+      { "name": "The Number-First Rule", "body": "Qualquer valor monetário ou de conquista é sempre Bold e pelo menos um degrau de tamanho acima do texto que o rotula.", "section": "typography" },
+      { "name": "The Shadow-Is-An-Exception Rule", "body": "Sombra não é um recurso de hierarquia geral — é a assinatura visual de um único par de componentes (os cards brancos do Painel de Finanças). Qualquer outro destaque usa cor de superfície, nunca BoxShadow.", "section": "elevation" },
+      { "name": "The Content-Gets-The-Rounder-Corner Rule", "body": "Quanto mais um elemento é conteúdo (card de missão, card de recorde) em vez de utilidade (linha de lista, barra), mais generoso o raio.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do usar Verde Cofre só pra ação/confirmação, Dourado Conquista só pra recompensa já alcançada.",
+      "Do manter sombra restrita aos cards brancos do Painel de Finanças.",
+      "Do deixar números financeiros/de conquista em Bold, um degrau de tamanho acima do rótulo.",
+      "Do usar Colors.GREEN/Colors.RED (não a paleta de marca) para semântica financeira de receita/despesa."
+    ],
+    "donts": [
+      "Don't deixar o FAB sem bgcolor explícito — inconsistência confirmada hoje em Categorias e Recorrentes (caem no azul padrão do tema em vez do Verde Cofre).",
+      "Don't adicionar BoxShadow fora dos dois cards brancos do Painel de Finanças.",
+      "Don't introduzir uma quarta cor de acento sem um papel próprio.",
+      "Don't trocar Roboto por uma fonte de marca própria sem decisão explícita."
+    ]
+  }
+}
