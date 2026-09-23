@@ -147,65 +147,78 @@ def _card_saldo_meta(titulo: str, valor_cents: int, ratio: float, icone, cor: st
     )
 
 
-def cabecalho_boas_vindas(nivel: goals_core.NivelProgresso) -> ft.Control:
-    """Mascote + saudação + progresso de Nível — fica no topo da Home, fora
-    dos cards claros do Painel de Finanças (mesmo fundo dark do resto do app,
-    igual no mockup da marca)."""
+def _saudacao_mascote() -> ft.Control:
+    """Mascote + saudação genérica — fica no topo da Home, fora dos cards
+    claros do Painel de Finanças (mesmo fundo dark do resto do app)."""
     return ft.Row(
         [
             ft.Image(
                 src="mascote_poupanca.png", width=64, height=64,
                 fit=ft.BoxFit.CONTAIN,
             ),
-            ft.Column(
-                [
-                    ft.Text("Bem-vindo!", size=18, weight=ft.FontWeight.BOLD),
-                    ft.Row(
-                        [
-                            ft.Text(f"Nível {nivel.nivel}", size=13, color=_COR_SECUNDARIA, weight=ft.FontWeight.BOLD),
-                            ft.Text(f"{nivel.xp_no_nivel}/{nivel.xp_por_nivel} XP", size=11, color=ft.Colors.GREY),
-                        ],
-                        spacing=8,
-                    ),
-                    ft.ProgressBar(
-                        value=nivel.ratio, color=_COR_SECUNDARIA, bgcolor=ft.Colors.GREY_800,
-                        border_radius=8, bar_height=8, width=200,
-                    ),
-                ],
-                spacing=4,
-                expand=True,
-            ),
+            ft.Text("Bem-vindo!", size=18, weight=ft.FontWeight.BOLD),
         ],
         spacing=12,
         vertical_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
 
-def painel_financas(
-    aneis_percentuais: tuple[int, int, int] = (0, 20, 10),
-    saldo_semana_cents: int = 10000,
-    saldo_semana_ratio: float = 0.35,
-    meta_poupanca_cents: int = 60000,
-    meta_poupanca_ratio: float = 0.6,
-) -> ft.Control:
-    """Painel de Finanças — 3 anéis de progresso + 2 cards (Saldos da Semana,
-    Metas de Poupança). Valores vêm por parâmetro; por ora usamos os mesmos
-    do mockup da marca como exemplo (ainda não ligado a dados reais)."""
-    cores_aneis = (_COR_PRIMARIA, _COR_SECUNDARIA, _COR_TERCIARIA)
+def _progresso_nivel(nivel: goals_core.NivelProgresso) -> ft.Control:
+    """Nível + barra de XP — mesma ideia de `_anel_progresso`/`_card_saldo_meta`:
+    um componente, um dado."""
     return ft.Column(
         [
             ft.Row(
-                [_anel_progresso(p, c) for p, c in zip(aneis_percentuais, cores_aneis)],
+                [
+                    ft.Text(f"Nível {nivel.nivel}", size=13, color=_COR_SECUNDARIA, weight=ft.FontWeight.BOLD),
+                    ft.Text(f"{nivel.xp_no_nivel}/{nivel.xp_por_nivel} XP", size=11, color=ft.Colors.GREY),
+                ],
+                spacing=8,
+            ),
+            ft.ProgressBar(
+                value=nivel.ratio, color=_COR_SECUNDARIA, bgcolor=ft.Colors.GREY_800,
+                border_radius=8, bar_height=8, width=200,
+            ),
+        ],
+        spacing=4,
+    )
+
+
+def cabecalho_boas_vindas(nivel: goals_core.NivelProgresso) -> ft.Control:
+    """Compõe mascote+saudação e o progresso de Nível numa linha só."""
+    return ft.Row(
+        [_saudacao_mascote(), _progresso_nivel(nivel)],
+        spacing=12,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+    )
+
+
+# Painel de Finanças ainda não está ligado a dados reais — valores de exemplo
+# do mockup da marca, até existir um cálculo em core/ pra alimentar isso.
+_PAINEL_ANEIS = ((0, _COR_PRIMARIA), (20, _COR_SECUNDARIA), (10, _COR_TERCIARIA))
+_PAINEL_SALDO_SEMANA_CENTS = 10000
+_PAINEL_SALDO_SEMANA_RATIO = 0.35
+_PAINEL_META_POUPANCA_CENTS = 60000
+_PAINEL_META_POUPANCA_RATIO = 0.6
+
+
+def painel_financas() -> ft.Control:
+    """Painel de Finanças — 3 anéis de progresso + 2 cards (Saldos da Semana,
+    Metas de Poupança)."""
+    return ft.Column(
+        [
+            ft.Row(
+                [_anel_progresso(p, c) for p, c in _PAINEL_ANEIS],
                 alignment=ft.MainAxisAlignment.SPACE_EVENLY,
             ),
             ft.Row(
                 [
                     _card_saldo_meta(
-                        "Saldos da Semana", saldo_semana_cents, saldo_semana_ratio,
+                        "Saldos da Semana", _PAINEL_SALDO_SEMANA_CENTS, _PAINEL_SALDO_SEMANA_RATIO,
                         ft.Icons.ATTACH_MONEY_ROUNDED, _COR_PRIMARIA,
                     ),
                     _card_saldo_meta(
-                        "Metas de Poupança", meta_poupanca_cents, meta_poupanca_ratio,
+                        "Metas de Poupança", _PAINEL_META_POUPANCA_CENTS, _PAINEL_META_POUPANCA_RATIO,
                         ft.Icons.ACCOUNT_BALANCE_WALLET_ROUNDED, _COR_SECUNDARIA,
                     ),
                 ],

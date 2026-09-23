@@ -73,7 +73,6 @@ XP_POR_NIVEL = 100
 @dataclass(frozen=True)
 class NivelProgresso:
     nivel: int              # 1-indexado — 0 PRs = nível 1
-    xp_total: int
     xp_no_nivel: int        # XP acumulado dentro do nível atual (0..xp_por_nivel-1)
     xp_por_nivel: int
     ratio: float             # xp_no_nivel / xp_por_nivel — pronto pra barra de progresso
@@ -87,6 +86,6 @@ def calcular_nivel(total_prs: int, xp_por_pr: int = XP_POR_PR, xp_por_nivel: int
     nivel = xp_total // xp_por_nivel + 1
     xp_no_nivel = xp_total % xp_por_nivel
     return NivelProgresso(
-        nivel=nivel, xp_total=xp_total, xp_no_nivel=xp_no_nivel,
+        nivel=nivel, xp_no_nivel=xp_no_nivel,
         xp_por_nivel=xp_por_nivel, ratio=xp_no_nivel / xp_por_nivel,
     )

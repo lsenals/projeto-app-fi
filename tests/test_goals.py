@@ -70,7 +70,6 @@ def test_overall_streak_vazio():
 def test_calcular_nivel_zero_prs_e_nivel_1_zerado():
     n = calcular_nivel(total_prs=0, xp_por_pr=50, xp_por_nivel=100)
     assert n.nivel == 1
-    assert n.xp_total == 0
     assert n.xp_no_nivel == 0
     assert n.ratio == 0.0
 
