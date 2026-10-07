@@ -30,6 +30,8 @@
 - Hub mais compacto: cartão com 80% da largura, centralizado na tela, linhas menores e mais juntas.
 - Botão **+** do módulo de finanças (Finanças pessoais, Categorias, Recorrentes) em verde claro
   (`#5AC27D`, mesma saturação e luminosidade do dourado); nos demais módulos segue dourado.
+- **Botão voltar do Android** passa a voltar uma tela (para o módulo pai) em vez de fechar o app; só
+  no hub ele sai. Mapa de telas em `ui/navegacao.py`.
 - Documentação alinhada: `DESIGN.md`, `PRODUCT.md`, `README.md` e `CLAUDE.md` descrevem a identidade
   e a navegação atuais.
 - Barra de XP, títulos dos cards, tabela do Fechamento e lista de lançamentos ajustados para telas

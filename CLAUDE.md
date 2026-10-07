@@ -110,6 +110,10 @@ o app não acessa a internet). O nome do produto é grafado **"Finapple"** (a mi
 **Estrutura de navegação (2026-10-07):** a Home é um hub (`ui/home.py`) com *Finanças pessoais*,
 *Investimentos* (Cripto ativo; Renda Fixa e Ações "Em breve") e *Objetivos*. **Não há barra inferior**:
 cada módulo tem seta de volta; o menu lateral (Categorias, Recorrentes, Configurações) mora na Home.
+**Botão voltar do Android:** o app tem uma tela raiz só, então ele fechava o app. Agora cada tela se
+registra em `main.py` (`_registrando_tela`) e a raiz fica com `can_pop=False` fora do hub; o evento
+`on_confirm_pop` leva à tela pai definida em `ui/navegacao.py` (testado em `tests/test_navegacao.py`).
+Tela nova ⇒ registrar o nome em `PAI_DA_TELA` **e** em `_registrando_tela` (um teste confere os dois).
 "Finanças pessoais" é a antiga Home (`montar_home` em `main.py`); Lançar abre pelo botão + dela.
 O botão **+** é dourado, exceto no módulo de finanças (Finanças pessoais, Categorias, Recorrentes),
 onde é o **verde claro** `cores.VERDE_CLARO` (mesmo brilho do dourado). O hub é centralizado na tela e
@@ -154,8 +158,8 @@ sessão já aberta antes da instalação não as tem).
 **Estado do APK (2026-10-07):** o build foi revalidado depois de reinstalar o ambiente e de endurecer o
 app (sem permissão de internet, sem backup automático). Ele **ainda não foi aberto num aparelho** e
 **será reconstruído ao final de todas as alterações em andamento** (hub, Cripto, fontes variáveis,
-nome "Finapple" no rótulo). A conferir no aparelho: pesos das fontes variáveis, botão voltar do Android
-(hoje fecha o app) e o app sem a permissão de internet.
+nome "Finapple" no rótulo). A conferir no aparelho: pesos das fontes variáveis, **botão voltar do
+Android** (implementado, não verificável fora de um aparelho) e o app sem a permissão de internet.
 
 **Primeiro `flet build apk` de teste rodado com sucesso em 2026-09-23** (APK em
 `build/apk/finapple.apk`, ~54MB, `--org com.finapple --product Finapple --project finapple

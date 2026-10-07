@@ -43,6 +43,7 @@ from app_fi.report.html_report import render_report
 from app_fi.ui import cores
 from app_fi.ui.cripto import criar_tela_cripto
 from app_fi.ui.home import criar_home
+from app_fi.ui.navegacao import pai_de
 
 _MESES = [
     "", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
@@ -1800,6 +1801,47 @@ def main(page: ft.Page) -> None:
             ], spacing=10),
         ]
         page.update()
+
+    # ------------------------------------------------ botão voltar do Android
+    # O app tem uma tela raiz só (as telas são trocadas dentro dela), então o voltar do sistema fechava
+    # o app. Cada tela registra o nome; fora do hub a raiz fica com `can_pop=False` e o voltar vira
+    # "ir para a tela pai". No hub `can_pop=True`: o voltar sai do app, como esperado. Diálogos e o menu
+    # lateral continuam sendo fechados primeiro, pelo próprio Flutter.
+    tela = {"atual": "hub"}
+    raiz = page.views[0]
+    # quem é o pai de cada tela está em ui/navegacao.py (testado); aqui só liga os nomes às funções
+    montador_da_tela = {
+        "hub": lambda: montar_hub(), "financas": lambda: montar_home(),
+        "investimentos": lambda: montar_investimentos(),
+    }
+
+    def _registrando_tela(nome: str, funcao):
+        def montar_registrando(*args, **kwargs):
+            tela["atual"] = nome
+            raiz.can_pop = pai_de(nome) is None  # só o hub deixa o voltar sair do app
+            return funcao(*args, **kwargs)
+        return montar_registrando
+
+    # rebind: os callbacks acima e nos módulos `ui/` chamam estes nomes só na hora do clique
+    montar_hub = _registrando_tela("hub", montar_hub)
+    montar_investimentos = _registrando_tela("investimentos", montar_investimentos)
+    montar_cripto = _registrando_tela("cripto", montar_cripto)
+    montar_home = _registrando_tela("financas", montar_home)
+    montar_objetivos = _registrando_tela("objetivos", montar_objetivos)
+    montar_categorias = _registrando_tela("categorias", montar_categorias)
+    montar_recorrentes = _registrando_tela("recorrentes", montar_recorrentes)
+    montar_config = _registrando_tela("config", montar_config)
+    montar_lancamento_rapido = _registrando_tela("lancamento", montar_lancamento_rapido)
+    montar_fechamento = _registrando_tela("fechamento", montar_fechamento)
+    montar_revisao_importacao = _registrando_tela("revisao", montar_revisao_importacao)
+
+    async def ao_voltar_do_sistema(_e) -> None:
+        pai = pai_de(tela["atual"])
+        await raiz.confirm_pop(pai is None)  # cancela o pop (fica no app) quando há tela pai
+        if pai is not None:
+            montador_da_tela[pai]()
+
+    raiz.on_confirm_pop = ao_voltar_do_sistema
 
     montar_hub()
 

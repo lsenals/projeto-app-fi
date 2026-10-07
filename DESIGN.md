@@ -179,8 +179,9 @@ no rodapé. O bloco é centralizado na tela (espaçadores proporcionais), e o ca
 largura (margens iguais), para as linhas não irem até as bordas. *Investimentos* abre um segundo
 índice com **Cripto** (ativa) e **Renda Fixa** e **Ações** como "Em breve". Todo módulo tem **seta
 de volta** na AppBar (Cripto volta para Investimentos, Lançar para Finanças); o **menu lateral**
-(Categorias, Recorrentes, Configurações) só existe na Home. *Pendência:* o botão voltar do Android
-ainda fecha o app.
+(Categorias, Recorrentes, Configurações) só existe na Home. **Botão voltar do Android:** leva à tela
+pai (mapa em `ui/navegacao.py`: Cripto→Investimentos, Lançar/Fechamento→Finanças, os demais→hub) e só
+no hub sai do app; diálogos e o menu lateral fecham primeiro. *Ainda não verificado num aparelho.*
 
 FAB circular no canto inferior direito para a criação primária de cada tela.
 
