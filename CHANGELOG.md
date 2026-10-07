@@ -18,13 +18,21 @@
 - Sem permissão de internet; backup automático do Android desligado; escape de HTML no relatório e
   neutralização de fórmulas no CSV.
 
-### Interface
-- Barra de XP, títulos dos cards, tabela do Fechamento e lista da Home ajustados para telas de
-  celular; barra inferior marca "Home" nas telas secundárias.
+### Home em hub, marca e navegação
+- A Home virou um índice de módulos: **Finanças pessoais**, **Investimentos** (Cripto, Renda Fixa e
+  Ações — os dois últimos como "Em breve") e **Objetivos**, com o nível/XP no rodapé. O painel e os
+  lançamentos de antes agora vivem em "Finanças pessoais".
+- **Barra inferior removida**: cada módulo tem seta de volta; o menu lateral (Categorias,
+  Recorrentes, Configurações) fica na Home. Lançar abre pelo botão + de Finanças pessoais.
+- Nova identidade "grafite e dourado discreto", logo SVG, fontes Sora e Manrope empacotadas
+  (`src/assets/fonts`, licença OFL), nome grafado "Finapple" e símbolo ao lado do nome removido.
+- Cartões do painel de finanças redesenhados (escuros, na linguagem da Home).
+- Barra de XP, títulos dos cards, tabela do Fechamento e lista de lançamentos ajustados para telas
+  de celular.
 
 ## v1.0.0 — 2026-09-15
 
-Primeira versão fechada do FinApple (antes "App FI").
+Primeira versão fechada do Finapple (antes "App FI").
 
 ### Lançamentos e fechamento do mês
 - Lançar despesa/receita, editar, excluir com Desfazer (toast).
@@ -55,7 +63,7 @@ Primeira versão fechada do FinApple (antes "App FI").
   secundários (Categorias, Recorrentes, Configurações).
 
 ### Identidade visual
-- Rebrand para **FinApple**: tema dark com paleta verde esmeralda (primária) e
+- Rebrand para **Finapple**: tema dark com paleta verde esmeralda (primária) e
   dourado neon (secundária), header com ícone de coroa (workspace_premium).
   Tema claro disponível via toggle em Configurações.
 

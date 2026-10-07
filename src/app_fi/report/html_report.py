@@ -110,7 +110,7 @@ def render_report(
 </head>
 <body>
   <h1>Fechamento · {mes_nome} {ano}</h1>
-  <p class="sub">FinApple — gerado em {gerado_em}</p>
+  <p class="sub">Finapple — gerado em {gerado_em}</p>
 
   <div class="tiles">
     <div class="tile"><div class="k">Entradas</div><div class="v pos">{format_brl(entradas_cents)}</div></div>

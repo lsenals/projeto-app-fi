@@ -54,13 +54,13 @@ dispositivos, sem backend, sem internet necessária pro app funcionar.
 
 ## Brand Commitments
 
-Nome do produto: **FinApple** (trocadilho "Pineapple" + Finanças), definido em 2026-09-15.
+Nome do produto: **Finapple** (trocadilho "Pineapple" + Finanças), definido em 2026-09-15.
 O nome técnico do pacote/repositório (`app_fi`/`app-fi`) permanece diferente do nome de
 produto por decisão consciente (renomear migraria dados de usuários já existentes — não é
 prioridade). Mascote: abacaxi ilustrado (cofrinho + moeda de porcentagem é a variante
 principal, usada no cabeçalho da Home; há duas variantes reservas sem uso definido ainda —
 coroa/escudo/cofre e globo/moedas internacionais). Paleta e identidade visual completa já
-documentadas em `CLAUDE.md` e no vault Obsidian ("FinApple — Identidade Visual"); este
+documentadas em `CLAUDE.md` e no vault Obsidian ("Finapple — Identidade Visual"); este
 arquivo não duplica esses detalhes visuais.
 
 ## Evidence on Hand

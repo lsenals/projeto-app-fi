@@ -1,5 +1,5 @@
 ---
-name: FinApple
+name: Finapple
 description: App financeiro pessoal e gamificado — cofre descontraído em Material dark, abacaxi como mascote de conquista.
 colors:
   verde-cofre: "#00E676"
@@ -72,13 +72,13 @@ components:
     rounded: "{rounded.pill}"
 ---
 
-# Design System: FinApple
+# Design System: Finapple
 
 ## Overview
 
 **Creative North Star: "O Cofre Descontraído"**
 
-FinApple trata dinheiro a sério sem parecer um banco. A base é um dark mode carbono — quase
+Finapple trata dinheiro a sério sem parecer um banco. A base é um dark mode carbono — quase
 um cofre discreto — onde a maior parte da interface fica quieta, em tons de cinza-azulado, e
 a cor só aparece nos momentos que importam: um botão de ação, um PR batido, uma barra de
 progresso subindo. O abacaxi mascote e a gamificação (Nível, ofensiva, PRs) trazem calor e
@@ -148,7 +148,7 @@ sempre em peso Bold, maiores que o texto ao redor — a hierarquia é "o número
 - **Display** (Bold, 30): o número de maior destaque da tela — hoje só a contagem de meses de
   ofensiva no cabeçalho de Objetivos.
 - **Headline** (Bold, 20-22): saldo do mês, valores em destaque nos cards brancos, wordmark
-  "FinApple" no cabeçalho de marca.
+  "Finapple" no cabeçalho de marca.
 - **Title** (Bold, 18): saudação da Home ("Bem-vindo!"), títulos de diálogo ("Novo objetivo").
 - **Body** (Regular/W_600, 12-13): texto de conteúdo padrão, rótulos de card, progresso textual.
 - **Label** (W_600/Bold, 10-12, cor secundária): legendas, datas, textos de apoio — sempre em
@@ -269,4 +269,4 @@ não inventar uma variação.
 - **Don't** introduzir uma quarta cor de acento sem um papel próprio — se parecer que falta
   cor numa tela, a resposta quase sempre é mais espaço/tom, não mais cor.
 - **Don't** trocar Roboto por uma fonte de marca própria sem decisão explícita — a
-  personalidade do FinApple vem da paleta e do mascote, não da tipografia.
+  personalidade do Finapple vem da paleta e do mascote, não da tipografia.

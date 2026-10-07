@@ -19,7 +19,6 @@ from app_fi.core import crypto as core
 from app_fi.data import crypto_repo as repo
 from app_fi.ui import cores
 
-_INDICE_ABA = 3
 _APENAS_NUMEROS = ft.InputFilter(regex_string=r"^[0-9.,]*$", allow=True)
 _MAX_BARRAS = 10
 
@@ -54,7 +53,7 @@ def _rotulo_valor(rotulo: str, valor: str, cor: str | None = None, destaque: boo
 
 def criar_tela_cripto(
     page: ft.Page, conn: sqlite3.Connection, body: ft.Column, *,
-    abrir_menu: Callable, confirmar: Callable[[str], None],
+    voltar: Callable, confirmar: Callable[[str], None],
 ) -> Callable[[], None]:
     """Devolve `montar()`, que desenha a tela de Cripto no `body` do app."""
 
@@ -253,10 +252,9 @@ def criar_tela_cripto(
     # ------------------------------------------------------------------ tela
 
     def montar() -> None:
-        page.navigation_bar.selected_index = _INDICE_ABA
         page.appbar = ft.AppBar(
-            leading=ft.IconButton(icon=ft.Icons.MENU, on_click=abrir_menu),
-            title=ft.Text("Cripto"),
+            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=voltar),
+            title=ft.Text("Cripto", font_family=cores.FONTE_TITULO, weight=ft.FontWeight.W_600),
             actions=[ft.IconButton(
                 icon=ft.Icons.PRICE_CHANGE_ROUNDED, tooltip="Atualizar preços", on_click=lambda e: abrir_precos(),
             )],

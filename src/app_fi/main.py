@@ -1,4 +1,4 @@
-"""FinApple — ponto de entrada.
+"""Finapple — ponto de entrada.
 
 Passos 3-5 fecham a v1 planejada (dialog, drawer+Categorias, Fechamento,
 Exportar/backup). Depois: importar fatura de cartão (CSV/XLSX do C6 Bank) com
@@ -6,7 +6,7 @@ revisão manual, navegação entre meses, estabelecimento no lançamento manual
 (finalmente usa a memória de `payees`) + tela de Recorrentes que modela e
 prevê término, sem ainda criar lançamento sozinha — isso é o motor de
 materialização, trabalho futuro. Depois disso: UI gamificada (Lançar +
-Objetivos) e, agora, a identidade visual FinApple (era "App FI").
+Objetivos) e, agora, a identidade visual Finapple (era "App FI").
 """
 
 import asyncio
@@ -42,13 +42,14 @@ from app_fi.report.csv_report import render_csv
 from app_fi.report.html_report import render_report
 from app_fi.ui import cores
 from app_fi.ui.cripto import criar_tela_cripto
+from app_fi.ui.home import criar_home
 
 _MESES = [
     "", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ]
 
-# Identidade visual FinApple (paleta em app_fi/ui/cores.py, compartilhada com as telas em ui/)
+# Identidade visual Finapple (paleta em app_fi/ui/cores.py, compartilhada com as telas em ui/)
 _COR_PRIMARIA = cores.PRIMARIA
 _COR_SECUNDARIA = cores.SECUNDARIA
 _COR_TERCIARIA = cores.TERCIARIA
@@ -118,88 +119,35 @@ def _anel_progresso(percentual: int, rotulo: str, cor: str) -> ft.Control:
 
 
 def _card_saldo_meta(titulo: str, valor_cents: int, ratio: float, icone, cor: str) -> ft.Control:
-    """Card branco "flutuando" sobre o fundo dark do app — contraste
-    deliberado, não é o tema dark padrão do resto da UI (decisão de marca)."""
+    """Cartão escuro do Painel de Finanças — mesma linguagem das linhas da Home (superfície
+    carbono, borda fina, bloco de ícone). Substituiu os cartões brancos de 09/2026."""
     return ft.Container(
         content=ft.Column(
             [
                 ft.Container(
-                    content=ft.Icon(icone, color=ft.Colors.WHITE, size=16),
-                    bgcolor=cor, width=30, height=30, border_radius=100,
+                    content=ft.Icon(icone, color=cor, size=20), width=40, height=40, border_radius=12,
+                    bgcolor=cores.ICONE_FUNDO, border=ft.Border.all(1, cores.ICONE_BORDA),
                     alignment=ft.Alignment.CENTER,
                 ),
                 # título numa linha própria (até 2 linhas): ao lado do ícone ele ficava
                 # truncado ("Saldos da Sema…") em telas de celular
                 ft.Text(
-                    titulo, size=12, weight=ft.FontWeight.W_600, color=ft.Colors.GREY_700,
-                    max_lines=2, overflow=ft.TextOverflow.ELLIPSIS,
+                    titulo, size=12, color=cores.TEXTO_SUAVE, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS,
                 ),
                 ft.Text(
-                    format_brl(valor_cents), size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK,
-                    max_lines=1, overflow=ft.TextOverflow.ELLIPSIS,
+                    format_brl(valor_cents), font_family=cores.FONTE_TITULO, size=20,
+                    weight=ft.FontWeight.W_600, color=cores.TEXTO, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS,
                 ),
-                ft.ProgressBar(value=ratio, color=cor, bgcolor=ft.Colors.GREY_200, border_radius=8, bar_height=6),
+                ft.ProgressBar(value=ratio, color=cor, bgcolor=cores.BORDA, border_radius=8, bar_height=6),
             ],
             spacing=8,
         ),
         expand=True,
-        bgcolor=ft.Colors.WHITE,
-        border_radius=15,
+        height=168,  # igual nos dois: o título de um deles quebra em 2 linhas e o do outro não
+        bgcolor=cores.SUPERFICIE,
+        border=ft.Border.all(1, cores.BORDA),
+        border_radius=18,
         padding=16,
-        shadow=ft.BoxShadow(
-            blur_radius=16, spread_radius=1,
-            color=ft.Colors.with_opacity(0.25, ft.Colors.BLACK),
-            offset=ft.Offset(0, 4),
-        ),
-    )
-
-
-def _saudacao_mascote() -> ft.Control:
-    """Mascote + saudação genérica — fica no topo da Home, fora dos cards
-    claros do Painel de Finanças (mesmo fundo dark do resto do app)."""
-    return ft.Row(
-        [
-            # logo em SVG (traço dourado/prata, fundo transparente): o PNG antigo tinha o fundo
-            # pintado com o carbono da paleta anterior e apareceria como um quadrado na nova
-            ft.Image(
-                src="logo_finapple.svg", width=56, height=65,
-                fit=ft.BoxFit.CONTAIN,
-            ),
-            ft.Text("Bem-vindo!", size=18, weight=ft.FontWeight.BOLD),
-        ],
-        spacing=12,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-    )
-
-
-def _progresso_nivel(nivel: goals_core.NivelProgresso) -> ft.Control:
-    """Nível + barra de XP — mesma ideia de `_anel_progresso`/`_card_saldo_meta`:
-    um componente, um dado."""
-    return ft.Column(
-        [
-            ft.Row(
-                [
-                    ft.Text(f"Nível {nivel.nivel}", size=13, color=_COR_SECUNDARIA, weight=ft.FontWeight.BOLD),
-                    ft.Text(f"{nivel.xp_no_nivel}/{nivel.xp_por_nivel} XP", size=11, color=ft.Colors.GREY),
-                ],
-                spacing=8,
-            ),
-            ft.ProgressBar(
-                value=nivel.ratio, color=_COR_SECUNDARIA, bgcolor=ft.Colors.GREY_800,
-                border_radius=8, bar_height=8,
-            ),
-        ],
-        spacing=4,
-        expand=True,  # ocupa só o que sobra ao lado do mascote; largura fixa estourava em 390px
-    )
-
-
-def cabecalho_boas_vindas(nivel: goals_core.NivelProgresso) -> ft.Control:
-    """Compõe mascote+saudação e o progresso de Nível numa linha só."""
-    return ft.Row(
-        [_saudacao_mascote(), _progresso_nivel(nivel)],
-        spacing=12,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
 
@@ -223,7 +171,7 @@ def painel_financas(painel: PainelFinancas) -> ft.Control:
                     ),
                     _card_saldo_meta(
                         "Poupança do mês", painel.poupanca_mes_cents, painel.poupanca_mes_ratio,
-                        ft.Icons.ACCOUNT_BALANCE_WALLET_ROUNDED, _COR_SECUNDARIA,
+                        ft.Icons.ACCOUNT_BALANCE_WALLET_ROUNDED, _COR_PRIMARIA,
                     ),
                 ],
                 spacing=12,
@@ -234,7 +182,8 @@ def painel_financas(painel: PainelFinancas) -> ft.Control:
 
 
 def main(page: ft.Page) -> None:
-    page.title = "FinApple"
+    page.title = "Finapple"
+    page.fonts = cores.FONTES  # Sora (títulos) e Manrope (texto), empacotadas em src/assets/fonts
     page.padding = 20
     conn = get_db()
     hoje = dt.date.today()
@@ -242,10 +191,11 @@ def main(page: ft.Page) -> None:
     tema_salvo = goals_repo.get_setting(conn, "theme_mode", default="dark")
     page.theme_mode = ft.ThemeMode.LIGHT if tema_salvo == "light" else ft.ThemeMode.DARK
 
-    # Identidade visual FinApple: verde primário + dourado secundário sobre
+    # Identidade visual Finapple: verde primário + dourado secundário sobre
     # fundo carbono no escuro (a base da marca); o claro herda os mesmos
     # destaques pra não perder identidade quando o usuário alterna o tema.
     page.dark_theme = ft.Theme(
+        font_family=cores.FONTE_TEXTO,
         color_scheme=ft.ColorScheme(
             primary=_COR_PRIMARIA, on_primary=ft.Colors.BLACK,
             secondary=_COR_SECUNDARIA, on_secondary=ft.Colors.BLACK,
@@ -255,6 +205,7 @@ def main(page: ft.Page) -> None:
         scaffold_bgcolor=_COR_FUNDO,
     )
     page.theme = ft.Theme(
+        font_family=cores.FONTE_TEXTO,
         color_scheme=ft.ColorScheme(
             primary=_COR_PRIMARIA, on_primary=ft.Colors.BLACK,
             secondary=_COR_SECUNDARIA, on_secondary=ft.Colors.BLACK,
@@ -263,40 +214,6 @@ def main(page: ft.Page) -> None:
 
     body = ft.Column(expand=True)
     page.add(body)
-
-    def cabecalho_finapple() -> ft.Control:
-        """Header/AppBar com a identidade da marca — a "coroa" do abacaxi como
-        ícone de conquista, nome em duas cores (Fin verde, Apple dourado)."""
-        return ft.Row(
-            [
-                ft.Icon(ft.Icons.WORKSPACE_PREMIUM_ROUNDED, color=_COR_SECUNDARIA, size=26),
-                ft.Row(
-                    [
-                        ft.Text("Fin", size=20, weight=ft.FontWeight.BOLD, color=cores.TEXTO_TITULO),
-                        ft.Text("Apple", size=20, weight=ft.FontWeight.BOLD, color=_COR_PRIMARIA),
-                    ],
-                    spacing=0,
-                ),
-            ],
-            spacing=8,
-        )
-
-    # -------------------------------------------------------- navegação (bottom bar)
-
-    def ir_para(indice: int) -> None:
-        page.navigation_bar.selected_index = indice
-        [montar_home, montar_lancamento_rapido, montar_objetivos, montar_cripto][indice]()
-
-    page.navigation_bar = ft.NavigationBar(
-        selected_index=0,
-        destinations=[
-            ft.NavigationBarDestination(icon=ft.Icons.HOME_ROUNDED, label="Home"),
-            ft.NavigationBarDestination(icon=ft.Icons.ADD_CIRCLE_ROUNDED, label="Lançar"),
-            ft.NavigationBarDestination(icon=ft.Icons.EMOJI_EVENTS_ROUNDED, label="Objetivos"),
-            ft.NavigationBarDestination(icon=ft.Icons.CURRENCY_BITCOIN, label="Cripto"),
-        ],
-        on_change=lambda e: ir_para(e.control.selected_index),
-    )
 
     def notificar(mensagem: str, desfazer) -> None:
         def ao_clicar_desfazer(_e) -> None:
@@ -320,7 +237,13 @@ def main(page: ft.Page) -> None:
     async def abrir_menu(_e) -> None:
         await page.show_drawer()
 
-    montar_cripto = criar_tela_cripto(page, conn, body, abrir_menu=abrir_menu, confirmar=confirmar)
+    montar_cripto = criar_tela_cripto(
+        page, conn, body, voltar=lambda e: montar_investimentos(), confirmar=confirmar,
+    )
+    montar_hub, montar_investimentos = criar_home(
+        page, conn, body, abrir_menu=abrir_menu, ir_financas=lambda: montar_home(),
+        ir_objetivos=lambda: montar_objetivos(), ir_cripto=lambda: montar_cripto(),
+    )
 
     async def ir_para_categorias(_e) -> None:
         await page.close_drawer()
@@ -436,10 +359,10 @@ def main(page: ft.Page) -> None:
         return calcular_painel([*rows_atual, *rows_anterior], hoje, batidos, len(objetivos))
 
     def montar_home() -> None:
-        page.navigation_bar.selected_index = 0
+        """Finanças pessoais (era a Home antes do hub): painel, saldo do mês e lançamentos."""
         page.appbar = ft.AppBar(
-            leading=ft.IconButton(icon=ft.Icons.MENU, on_click=abrir_menu),
-            title=cabecalho_finapple(),
+            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_hub()),
+            title=ft.Text("Finanças pessoais", font_family=cores.FONTE_TITULO, weight=ft.FontWeight.W_600),
             actions=[
                 ft.IconButton(
                     icon=ft.Icons.UPLOAD_FILE,
@@ -453,9 +376,7 @@ def main(page: ft.Page) -> None:
                 ),
             ],
         )
-        nivel = goals_core.calcular_nivel(goals_repo.count_achieved(conn))
         body.controls = [
-            cabecalho_boas_vindas(nivel),
             painel_host,
             ft.Divider(),
             ft.Row([
@@ -476,7 +397,7 @@ def main(page: ft.Page) -> None:
             lista,
         ]
         page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.ADD, bgcolor=_COR_PRIMARIA, on_click=lambda e: ir_para(1),
+            icon=ft.Icons.ADD, bgcolor=_COR_PRIMARIA, on_click=lambda e: montar_lancamento_rapido(),
         )
         atualizar()
 
@@ -1000,7 +921,6 @@ def main(page: ft.Page) -> None:
         page.update()
 
     def montar_fechamento() -> None:
-        page.navigation_bar.selected_index = 0  # telas secundárias: a seta volta pra Home
         ano, mes = mes_visualizado["ano"], mes_visualizado["mes"]
         page.appbar = ft.AppBar(
             leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_home()),
@@ -1038,9 +958,8 @@ def main(page: ft.Page) -> None:
         page.update()
 
     def montar_categorias() -> None:
-        page.navigation_bar.selected_index = 0
         page.appbar = ft.AppBar(
-            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_home()),
+            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_hub()),
             title=ft.Text("Categorias"),
         )
         body.controls = [categorias_lista]
@@ -1148,9 +1067,8 @@ def main(page: ft.Page) -> None:
         page.update()
 
     def montar_recorrentes() -> None:
-        page.navigation_bar.selected_index = 0
         page.appbar = ft.AppBar(
-            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_home()),
+            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_hub()),
             title=ft.Text("Recorrentes"),
         )
         page.floating_action_button = ft.FloatingActionButton(
@@ -1411,8 +1329,10 @@ def main(page: ft.Page) -> None:
     # ---------------------------------------------------------- lançamento rápido
 
     def montar_lancamento_rapido() -> None:
-        page.navigation_bar.selected_index = 1
-        page.appbar = ft.AppBar(title=ft.Text("Lançar"))
+        page.appbar = ft.AppBar(
+            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_home()),
+            title=ft.Text("Lançar"),
+        )
         page.floating_action_button = None
 
         kind = {"valor": "expense"}
@@ -1695,9 +1615,8 @@ def main(page: ft.Page) -> None:
         )
 
     def montar_objetivos() -> None:
-        page.navigation_bar.selected_index = 2
         page.appbar = ft.AppBar(
-            leading=ft.IconButton(icon=ft.Icons.MENU, on_click=abrir_menu),
+            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_hub()),
             title=ft.Text("Objetivos"),
         )
         page.floating_action_button = ft.FloatingActionButton(
@@ -1860,9 +1779,8 @@ def main(page: ft.Page) -> None:
     tema_claro_switch.on_change = alternar_tema
 
     def montar_config() -> None:
-        page.navigation_bar.selected_index = 0
         page.appbar = ft.AppBar(
-            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_home()),
+            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_hub()),
             title=ft.Text("Configurações"),
         )
         page.floating_action_button = None
@@ -1883,7 +1801,7 @@ def main(page: ft.Page) -> None:
         ]
         page.update()
 
-    montar_home()
+    montar_hub()
 
 
 if __name__ == "__main__":

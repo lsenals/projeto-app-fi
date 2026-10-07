@@ -1,7 +1,7 @@
-# CLAUDE.md — FinApple
+# CLAUDE.md — Finapple
 
-O produto se chama **FinApple** (nome + identidade visual definidos em 2026-09-15,
-detalhes em Obsidian > 06-Projects > FinApple — Identidade Visual). O repositório,
+O produto se chama **Finapple** (nome + identidade visual definidos em 2026-09-15,
+detalhes em Obsidian > 06-Projects > Finapple — Identidade Visual). O repositório,
 pacote Python (`app_fi`) e pasta de dados do usuário (`%LOCALAPPDATA%\app-fi`)
 continuam com o nome técnico antigo — renomear isso é uma decisão à parte, ainda
 não tomada, porque implicaria migrar dados de quem já usa o app.
@@ -89,11 +89,18 @@ de notas. Ambos ficam abertos juntos no workspace `app-fi.code-workspace`.
 ## Design e paleta
 
 Em 2026-10-07 a marca mudou para **grafite e dourado discreto** (vinda do canvas de design
-"FinApple – Nova Home", no claude.ai: https://claude.ai/artifact/GsMnTt1H4npwX6GNsfxLiv, fonte da
+"Finapple – Nova Home", no claude.ai: https://claude.ai/artifact/GsMnTt1H4npwX6GNsfxLiv, fonte da
 verdade visual — não há link automático com o repositório). Tokens em `src/app_fi/ui/cores.py`
-(nunca hardcodar hex nas telas), logo em `src/assets/logo_finapple.svg`. Decisões em aberto (Home em
-hub, grupo "Investimentos", fontes Sora/Manrope, barra inferior) em Obsidian > 06-Projects >
-`FinApple — Nova Home (design)`. O `DESIGN.md` e o `PRODUCT.md` ainda descrevem a paleta neon antiga.
+(nunca hardcodar hex nas telas), logo em `src/assets/logo_finapple.svg`, fontes **Sora** (títulos) e
+**Manrope** (texto) em `src/assets/fonts` (variáveis, licença OFL; registradas via `page.fonts`, porque
+o app não acessa a internet). O nome do produto é grafado **"Finapple"** (a minúsculo).
+
+**Estrutura de navegação (2026-10-07):** a Home é um hub (`ui/home.py`) com *Finanças pessoais*,
+*Investimentos* (Cripto ativo; Renda Fixa e Ações "Em breve") e *Objetivos*. **Não há barra inferior**:
+cada módulo tem seta de volta; o menu lateral (Categorias, Recorrentes, Configurações) mora na Home.
+"Finanças pessoais" é a antiga Home (`montar_home` em `main.py`); Lançar abre pelo botão + dela.
+Decisões e histórico em Obsidian > 06-Projects > `Finapple — Nova Home (design)`. O `DESIGN.md` e o
+`PRODUCT.md` ainda descrevem a paleta neon antiga e a barra inferior.
 
 ## O que evitar
 
@@ -130,7 +137,7 @@ Pra rodar `flet build apk`, abrir um terminal **novo** (as variáveis são de us
 sessão já aberta antes da instalação não as tem).
 
 **Primeiro `flet build apk` de teste rodado com sucesso em 2026-09-23** (APK em
-`build/apk/finapple.apk`, ~54MB, `--org com.finapple --product FinApple --project finapple
+`build/apk/finapple.apk`, ~54MB, `--org com.finapple --product Finapple --project finapple
 --arch arm64-v8a`). `flet build` gerencia a própria versão pinada do Flutter, separada da
 instalada em `C:\src\flutter` — baixou Flutter 3.44.8 em `C:\Users\le_se\flutter\3.44.8` na
 primeira execução (normal, não é um erro). Três bloqueios de ambiente encontrados e
@@ -165,7 +172,8 @@ que resolve via `sys.argv[0]` e quebra quando o arquivo é importado por outro s
 launcher de build) ou testado via `python -c "..."`.
 
 Mascotes do abacaxi (2026-09-15, ilustrações fornecidas pelo usuário):
-- `mascote_poupanca.png` — o principal, usado no cabeçalho de boas-vindas/Nível da Home.
+- (desde 2026-10-07 o logo SVG `logo_finapple.svg` substituiu os mascotes PNG na Home; os PNGs
+  seguem no repositório, sem uso.) `mascote_poupanca.png` — era o principal, usado no cabeçalho de boas-vindas/Nível da Home.
   As ilustrações originais vêm em JPEG com fundo branco sólido; em vez de deixar
   transparente (primeira tentativa — funcionava, mas decidimos que pintar com a cor do
   app fica mais natural, sem risco de halo/anti-aliasing nas bordas), o fundo é **pintado
