@@ -23,41 +23,14 @@ from app_fi.core import crypto as core
 from app_fi.core import trades as core_trades
 from app_fi.data import trades_realizados_repo as trades_repo
 from app_fi.ui import cores
+from app_fi.ui.componentes import APENAS_NUMEROS as _APENAS_NUMEROS
+from app_fi.ui.componentes import cor as _cor
+from app_fi.ui.componentes import data_br as _data_br
+from app_fi.ui.componentes import data_curta as _data_curta
+from app_fi.ui.componentes import rotulo_valor as _rotulo_valor
+from app_fi.ui.componentes import texto_exato as _texto_exato
 
-_APENAS_NUMEROS = ft.InputFilter(regex_string=r"^[0-9.,]*$", allow=True)
 _MAX_BARRAS = 10
-
-
-def _data_br(iso: str) -> str:
-    return f"{iso[8:10]}/{iso[5:7]}/{iso[0:4]}"
-
-
-def _data_curta(iso: str) -> str:
-    return f"{iso[8:10]}/{iso[5:7]}/{iso[2:4]}"
-
-
-def _texto_exato(valor: Decimal) -> str:
-    """Valor para pré-preencher um campo de edição, sem arredondar: 0.000021 -> '0,000021',
-    1234.567 -> '1234,567' (o formato de exibição arredondaria a centavos e alteraria o dado ao salvar)."""
-    texto = f"{valor.normalize():f}"
-    return texto.replace(".", ",")
-
-
-def _cor(valor: Decimal | None) -> str:
-    if valor is None or valor == 0:
-        return ft.Colors.GREY
-    return ft.Colors.GREEN if valor > 0 else ft.Colors.RED
-
-
-def _rotulo_valor(rotulo: str, valor: str, cor: str | None = None, destaque: bool = False) -> ft.Control:
-    return ft.Column(
-        [
-            ft.Text(rotulo, size=11, color=ft.Colors.GREY),
-            ft.Text(valor, size=15 if destaque else 13, weight=ft.FontWeight.BOLD, color=cor, max_lines=1,
-                    overflow=ft.TextOverflow.ELLIPSIS),
-        ],
-        spacing=2, expand=True,
-    )
 
 
 @dataclass(frozen=True)

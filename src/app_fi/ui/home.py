@@ -1,8 +1,8 @@
 """Home em hub e o grupo "Investimentos" (design: canvas "Finapple – Nova Home").
 
 A Home deixou de ser o painel de finanças: virou um índice de módulos (Finanças pessoais,
-Investimentos, Objetivos). "Investimentos" agrupa Cripto, Ações e Renda Fixa; uma linha sem
-destino (`ir_*` ausente) aparece como "Em breve". Só desenha e navega: os números vêm de
+Investimentos, Objetivos). "Investimentos" agrupa Cripto, Ações e Renda Fixa. A linha "Em breve"
+(`em_breve=True` em `_linha`) existe para módulos futuros. Só desenha e navega: os números vêm de
 `core/` e `data/`.
 """
 
@@ -10,13 +10,11 @@ from __future__ import annotations
 
 import sqlite3
 from collections.abc import Callable
-from decimal import Decimal
 
 import flet as ft
 
-from app_fi.core import crypto as core_crypto
 from app_fi.core import goals as goals_core
-from app_fi.data import acoes_repo, crypto_repo, goals_repo
+from app_fi.data import goals_repo
 from app_fi.ui import cores
 
 
@@ -84,31 +82,9 @@ def _nome_marca(tamanho: int) -> ft.Control:
 def criar_home(
     page: ft.Page, conn: sqlite3.Connection, body: ft.Column, *,
     abrir_menu: Callable, ir_financas: Callable[[], None], ir_objetivos: Callable[[], None],
-    ir_cripto: Callable[[], None], ir_acoes: Callable[[], None],
+    ir_cripto: Callable[[], None], ir_acoes: Callable[[], None], ir_renda_fixa: Callable[[], None],
 ) -> tuple[Callable[[], None], Callable[[], None]]:
     """Devolve `(montar_hub, montar_investimentos)`."""
-
-    def _resumo_modulo(repo) -> str | None:
-        """Valor e lucro % de uma carteira, na moeda de exibição dela; None se ainda está vazia."""
-        r = repo.load_wallet(conn).resumo
-        if r.investido <= 0:
-            return None
-        return f"{core_crypto.formatar_valor(r.valor_atual, r.moeda)} · {core_crypto.formatar_pct(r.lucro_pct)}"
-
-    def _resumo_investimentos() -> str | None:
-        """Total consolidado das carteiras, sempre em reais (o que está em dólar é convertido pela
-        cotação informada; o que não der para converter fica de fora e é sinalizado com "~")."""
-        investido = valor = Decimal(0)
-        sem_cotacao = 0
-        for repo in (crypto_repo, acoes_repo):
-            r = repo.load_wallet(conn, "BRL").resumo
-            investido += r.investido
-            valor += r.valor_atual
-            sem_cotacao += r.ativos_sem_cotacao
-        if investido <= 0:
-            return None
-        pct = (valor - investido) / investido * 100
-        return f"{core_crypto.formatar_valor(valor)} · {core_crypto.formatar_pct(pct)}" + (" ~" if sem_cotacao else "")
 
     def montar_hub() -> None:
         page.appbar = ft.AppBar(leading=ft.IconButton(icon=ft.Icons.MENU, on_click=abrir_menu))
@@ -127,7 +103,7 @@ def criar_home(
                 _linha(ft.Icons.CREDIT_CARD_ROUNDED, "Finanças pessoais", "Lançamentos e despesas",
                        lambda e: ir_financas()),
                 _linha(ft.Icons.TRENDING_UP_ROUNDED, "Investimentos",
-                       _resumo_investimentos() or "Cripto, renda fixa e ações",
+                       "Cripto, renda fixa e ações",
                        lambda e: montar_investimentos()),
                 _linha(ft.Icons.EMOJI_EVENTS_ROUNDED, "Objetivos", "Metas e conquistas",
                        lambda e: ir_objetivos()),
@@ -146,11 +122,11 @@ def criar_home(
         page.floating_action_button = None
         body.controls = [ft.Column([
             _lista([
-                _linha(ft.Icons.CURRENCY_BITCOIN, "Cripto", _resumo_modulo(crypto_repo) or "Carteira e trades",
+                _linha(ft.Icons.CURRENCY_BITCOIN, "Cripto", "Moedas digitais, em reais ou dólares",
                        lambda e: ir_cripto()),
-                _linha(ft.Icons.ACCOUNT_BALANCE_ROUNDED, "Renda Fixa", "Tesouro, CDB e outros títulos",
-                       em_breve=True),
-                _linha(ft.Icons.CANDLESTICK_CHART_ROUNDED, "Ações", _resumo_modulo(acoes_repo) or "Carteira e trades",
+                _linha(ft.Icons.ACCOUNT_BALANCE_ROUNDED, "Renda Fixa", "Tesouro, CDB, LCI, LCA e IR",
+                       lambda e: ir_renda_fixa()),
+                _linha(ft.Icons.CANDLESTICK_CHART_ROUNDED, "Ações", "Ações e fundos da bolsa",
                        lambda e: ir_acoes()),
             ]),
         ], spacing=16, scroll=ft.ScrollMode.AUTO, expand=True)]

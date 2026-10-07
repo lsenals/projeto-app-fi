@@ -45,6 +45,7 @@ from app_fi.ui.acoes import criar_tela_acoes
 from app_fi.ui.cripto import criar_tela_cripto
 from app_fi.ui.home import criar_home
 from app_fi.ui.navegacao import pai_de
+from app_fi.ui.renda_fixa import criar_tela_renda_fixa
 
 _MESES = [
     "", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
@@ -245,10 +246,13 @@ def main(page: ft.Page) -> None:
     montar_acoes = criar_tela_acoes(
         page, conn, body, voltar=lambda e: montar_investimentos(), confirmar=confirmar,
     )
+    montar_renda_fixa = criar_tela_renda_fixa(
+        page, conn, body, voltar=lambda e: montar_investimentos(), confirmar=confirmar,
+    )
     montar_hub, montar_investimentos = criar_home(
         page, conn, body, abrir_menu=abrir_menu, ir_financas=lambda: montar_home(),
         ir_objetivos=lambda: montar_objetivos(), ir_cripto=lambda: montar_cripto(),
-        ir_acoes=lambda: montar_acoes(),
+        ir_acoes=lambda: montar_acoes(), ir_renda_fixa=lambda: montar_renda_fixa(),
     )
 
     async def ir_para_categorias(_e) -> None:
@@ -1832,6 +1836,7 @@ def main(page: ft.Page) -> None:
     montar_investimentos = _registrando_tela("investimentos", montar_investimentos)
     montar_cripto = _registrando_tela("cripto", montar_cripto)
     montar_acoes = _registrando_tela("acoes", montar_acoes)
+    montar_renda_fixa = _registrando_tela("renda_fixa", montar_renda_fixa)
     montar_home = _registrando_tela("financas", montar_home)
     montar_objetivos = _registrando_tela("objetivos", montar_objetivos)
     montar_categorias = _registrando_tela("categorias", montar_categorias)

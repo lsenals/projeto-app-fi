@@ -16,6 +16,7 @@ PAI_DA_TELA: dict[str, str | None] = {
     "config": "hub",
     "cripto": "investimentos",
     "acoes": "investimentos",
+    "renda_fixa": "investimentos",
     "lancamento": "financas",
     "fechamento": "financas",
     "revisao": "financas",    # revisão da importação de fatura
