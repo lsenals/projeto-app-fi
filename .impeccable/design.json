@@ -21,7 +21,7 @@
       },
       "verde-claro": {
         "role": "accent",
-        "displayName": "Verde claro (só o + das finanças)",
+        "displayName": "Verde claro (só o + dos módulos de dinheiro)",
         "canonical": "#5AC27D"
       },
       "carbono-fundo": {
@@ -117,7 +117,7 @@
     "rules": [
       {
         "name": "The One Accent Rule",
-        "body": "O destaque da marca é um só — o dourado — em dois tons (ação e conquista). O verde claro tem um único emprego (o + do módulo de finanças) e o azul-aço uma única leitura (neutra).",
+        "body": "O destaque da marca é um só — o dourado — em dois tons (ação e conquista). O verde claro tem um único emprego (o + dos módulos de dinheiro: finanças e investimentos) e o azul-aço uma única leitura (neutra).",
         "section": "colors"
       },
       {
@@ -139,20 +139,27 @@
         "name": "The Content-Gets-The-Rounder-Corner Rule",
         "body": "Quanto mais um elemento é conteúdo (cartão de missão, de ativo, do hub) em vez de utilidade (linha, barra), mais generoso o raio.",
         "section": "shapes"
+      },
+      {
+        "name": "The Descriptive-Row Rule",
+        "body": "O subtítulo de uma linha do hub é uma descrição, nunca um valor ou percentual; números ficam dentro do módulo.",
+        "section": "components"
       }
     ],
     "dos": [
       "Do usar os tokens de ui/cores.py e as fontes por nome.",
       "Do usar o dourado claro só para conquista.",
       "Do separar com cor de superfície e borda de 1 px.",
-      "Do usar Colors.GREEN/Colors.RED para receita/despesa e lucro/prejuízo."
+      "Do usar Colors.GREEN/Colors.RED para receita/despesa e lucro/prejuízo.",
+      "Do dar ao + de todo módulo de dinheiro (finanças e investimentos) o verde claro; dourado só em Objetivos."
     ],
     "donts": [
       "Don't adicionar BoxShadow.",
-      "Don't hardcodar hex nas telas nem usar o verde claro fora do + do módulo de finanças.",
+      "Don't hardcodar hex nas telas nem usar o verde claro fora do + dos módulos de dinheiro.",
       "Don't introduzir uma terceira cor de destaque sem papel próprio.",
       "Don't voltar a usar Roboto, o ícone de coroa ao lado do nome ou os cartões brancos antigos.",
-      "Don't assumir que o tema claro está pronto (superfícies escuras fixas; revisão pendente)."
+      "Don't assumir que o tema claro está pronto (superfícies escuras fixas; revisão pendente).",
+      "Don't colocar números nos subtítulos das linhas do hub."
     ]
   }
 }

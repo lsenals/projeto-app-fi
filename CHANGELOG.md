@@ -10,6 +10,16 @@
   informada à mão (o app não acessa a internet).
 - Valores em `Decimal` exato (exceção à regra de centavos inteiros); migrações 006 e 007.
 
+### Ações, Renda Fixa e trades realizados
+- **Ações:** mesma carteira de Cripto (preço médio, lucro, metas e stop, moeda por ativo, evolução), sem
+  catálogo — tickers como PETR4 cadastrados à mão. Código compartilhado (`CarteiraRepo`, `ui/carteira.py`).
+- **Trades realizados** no rodapé de Cripto e de Ações: data e valor de compra e de venda, custos da
+  operação, lucro final e %, com resumo (lucro total, custos, taxa de acerto). Migração 008.
+- **Renda Fixa:** aplicações com tipo (17 opções: Tesouro Selic/Prefixado/IPCA+/Renda+/Educa+, CDB, LCI, LCA,
+  LC, CRI, CRA, debêntures, poupança…), instituição, corretora, rentabilidade pré, pós ou híbrida e taxa,
+  vencimento, liquidez, isenção de IR e FGC, aportes e resgates, valor atual informado à mão, **contador de
+  dias desde o 1º aporte** e **faixa e estimativa de IR** (tabela regressiva). Migração 009.
+
 ### Home
 - Painel de Finanças ligado a dados reais (objetivos batidos, gasto/renda, dia do mês, saldo dos
   últimos 7 dias, poupança do mês).
@@ -20,7 +30,7 @@
 
 ### Home em hub, marca e navegação
 - A Home virou um índice de módulos: **Finanças pessoais**, **Investimentos** (Cripto, Renda Fixa e
-  Ações — os dois últimos como "Em breve") e **Objetivos**, com o nível/XP no rodapé. O painel e os
+  Ações) e **Objetivos**, com o nível/XP no rodapé. O painel e os
   lançamentos de antes agora vivem em "Finanças pessoais".
 - **Barra inferior removida**: cada módulo tem seta de volta; o menu lateral (Categorias,
   Recorrentes, Configurações) fica na Home. Lançar abre pelo botão + de Finanças pessoais.
@@ -32,6 +42,8 @@
   (`#5AC27D`, mesma saturação e luminosidade do dourado); nos demais módulos segue dourado.
 - **Botão voltar do Android** passa a voltar uma tela (para o módulo pai) em vez de fechar o app; só
   no hub ele sai. Mapa de telas em `ui/navegacao.py`.
+- Botão **+** em verde claro em todos os módulos de dinheiro (inclui Cripto, Ações e Renda Fixa); só
+  Objetivos segue dourado. Subtítulos do hub e de Investimentos voltam a ser descrições, sem números.
 - Documentação alinhada: `DESIGN.md`, `PRODUCT.md`, `README.md` e `CLAUDE.md` descrevem a identidade
   e a navegação atuais.
 - Barra de XP, títulos dos cards, tabela do Fechamento e lista de lançamentos ajustados para telas

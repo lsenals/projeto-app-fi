@@ -6,8 +6,9 @@ App financeiro pessoal e gamificado, em Python + Flet. Repositório: `projeto-ap
 ## Módulos
 - **Finanças pessoais** — lançamentos, fechamento do mês, importação de fatura C6, recorrentes,
   categorias, relatórios (HTML/CSV) e backup.
-- **Investimentos** — **Cripto** (carteira lançada à mão, em R$ ou US$, com metas de trade);
-  Renda Fixa e Ações estão planejadas ("Em breve").
+- **Investimentos** — **Cripto** e **Ações** (carteira lançada à mão, em R$ ou US$, preço médio, metas de
+  trade e diário de trades realizados) e **Renda Fixa** (Tesouro, CDB, LCI/LCA…: rentabilidade pré ou pós,
+  vencimento, dias desde o aporte e faixa de IR).
 - **Objetivos** — metas, recordes pessoais (PRs), ofensiva e nível.
 
 ## Como rodar

@@ -27,11 +27,12 @@ projeto-app-fi/
 ├── src/assets/       → logo SVG, fontes (Sora, Manrope — OFL) e imagens
 ├── src/app_fi/
 │   ├── main.py       → ponto de entrada; navegação e as telas de Finanças, Objetivos e Config
-│   ├── ui/           → telas em módulos próprios: home.py (hub + Investimentos), cripto.py,
+│   ├── ui/           → telas em módulos próprios: home.py (hub + Investimentos), carteira.py (Cripto
+│   │                   e Ações), cripto.py, acoes.py, renda_fixa.py, componentes.py, navegacao.py,
 │   │                   cores.py (paleta e fontes)
-│   ├── core/         → lógica de domínio pura (dinheiro, resumo, objetivos, painel, cripto…)
+│   ├── core/         → lógica de domínio pura (dinheiro, resumo, objetivos, painel, cripto, trades, renda fixa…)
 │   ├── data/         → persistência (repositórios SQLite, backup, importação)
-│   ├── migrations/   → SQL numerado (001…007)
+│   ├── migrations/   → SQL numerado (001…009)
 │   └── report/       → relatório HTML e CSV
 ├── tests/            → testes (pytest)
 ├── DESIGN.md, PRODUCT.md, CHANGELOG.md → design, produto e histórico (mantê-los em dia)
@@ -74,8 +75,13 @@ pip install -e ".[dev]"
   efeito colateral) — facilita testar cálculos financeiros sem mockar nada.
 - Nomes de variáveis monetárias sempre explícitos sobre a unidade (`valor_reais`, não
   `valor`) — evita bugs de casas decimais/moeda mais adiante.
-- **Exceção à regra de centavos: criptoativos** (`core/crypto.py`, `data/crypto_repo.py`, tabelas
-  `crypto_*`). Preço de cripto pode ser R$ 0,000021 e a quantidade tem até 8 casas, então ali tudo é
+- **Exceção à regra de centavos: investimentos** — criptoativos, ações, trades realizados e renda fixa
+  (`core/crypto.py`, `core/trades.py`, `core/renda_fixa.py`; tabelas `crypto_*`, `acoes_*`,
+  `trades_realizados`, `rf_*`). **Cripto e Ações** são o mesmo modelo: `CarteiraRepo` (`data/carteira_repo.py`,
+  prefixo `crypto` ou `acoes`; `crypto_repo`/`acoes_repo` são fachadas) e `ui/carteira.py` (`ConfigCarteira`);
+  Ações não tem catálogo. **Trades realizados** (rodapé de Cripto e Ações) são um diário manual à parte do
+  livro de operações. **Renda Fixa** tem modelo próprio (aplicações com aportes/resgates, valor atual manual,
+  dias desde o 1º aporte e faixa de IR; IR é *estimativa*, sem IOF). Detalhes da cripto: Preço de cripto pode ser R$ 0,000021 e a quantidade tem até 8 casas, então ali tudo é
   `Decimal` (TEXT no banco) e só os totais exibidos são arredondados a centavos. Método de custo:
   preço médio. Sem internet, o preço atual é informado à mão (cada preço vira um ponto do histórico
   que alimenta o gráfico de evolução). **Moeda por ativo (BRL ou USD)**: todos os valores de um ativo
@@ -108,15 +114,18 @@ verdade visual — não há link automático com o repositório). Tokens em `src
 o app não acessa a internet). O nome do produto é grafado **"Finapple"** (a minúsculo).
 
 **Estrutura de navegação (2026-10-07):** a Home é um hub (`ui/home.py`) com *Finanças pessoais*,
-*Investimentos* (Cripto ativo; Renda Fixa e Ações "Em breve") e *Objetivos*. **Não há barra inferior**:
+*Investimentos* (Cripto, Renda Fixa e Ações) e *Objetivos*. **Não há barra inferior**:
 cada módulo tem seta de volta; o menu lateral (Categorias, Recorrentes, Configurações) mora na Home.
 **Botão voltar do Android:** o app tem uma tela raiz só, então ele fechava o app. Agora cada tela se
 registra em `main.py` (`_registrando_tela`) e a raiz fica com `can_pop=False` fora do hub; o evento
 `on_confirm_pop` leva à tela pai definida em `ui/navegacao.py` (testado em `tests/test_navegacao.py`).
-Tela nova ⇒ registrar o nome em `PAI_DA_TELA` **e** em `_registrando_tela` (um teste confere os dois).
+Tela nova ⇒ registrar o nome em `PAI_DA_TELA` **e** em `_registrando_tela` (um teste confere os dois) e dar
+ao + a cor da regra acima.
 "Finanças pessoais" é a antiga Home (`montar_home` em `main.py`); Lançar abre pelo botão + dela.
-O botão **+** é dourado, exceto no módulo de finanças (Finanças pessoais, Categorias, Recorrentes),
-onde é o **verde claro** `cores.VERDE_CLARO` (mesmo brilho do dourado). O hub é centralizado na tela e
+**Regra do botão +:** em todo módulo de **dinheiro** (Finanças pessoais, Categorias, Recorrentes, Cripto,
+Ações, Renda Fixa e módulos de investimento futuros) é o **verde claro** `cores.VERDE_CLARO` (mesmo brilho
+do dourado); dourado só em Objetivos. **Subtítulos das linhas do hub e de Investimentos são descrições,
+nunca números** (valores ficam dentro do módulo). O hub é centralizado na tela e
 o cartão ocupa 80% da largura (proporção, não largura fixa — `page.width` não é confiável no 1º desenho).
 Decisões e histórico em Obsidian > 06-Projects > `Finapple — Nova Home (design)`. `DESIGN.md` e
 `PRODUCT.md` foram atualizados em 2026-10-07 para esta identidade (a versão neon antiga está no git).

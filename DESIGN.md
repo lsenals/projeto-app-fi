@@ -61,7 +61,7 @@ components:
     backgroundColor: "{colors.dourado}"
     textColor: "#000000"
     rounded: "{rounded.sm}"
-  fab-financas:
+  fab-modulos-de-dinheiro:
     backgroundColor: "{colors.verde-claro}"
     textColor: "#000000"
     rounded: "{rounded.pill}"
@@ -125,9 +125,10 @@ acentos de papel único (azul-aço e verde-claro) e as cores semânticas do dinh
 - **Azul-aço** (#8FB0BF): leitura neutra — hoje só o terceiro anel do Painel de Finanças.
 
 ### Accent (um único uso)
-- **Verde claro** (#5AC27D): exclusivo do botão **+** do módulo de finanças (Finanças pessoais,
-  Categorias, Recorrentes) — o verde com a mesma saturação e luminosidade do dourado (HSL), para
-  parecer irmão dele. Contraste com o ícone preto: 9,4:1.
+- **Verde claro** (#5AC27D): exclusivo do botão **+** dos módulos de dinheiro — Finanças pessoais
+  (com Categorias e Recorrentes) e os de investimento (**Cripto, Ações, Renda Fixa**) — e de todo módulo
+  novo desse tipo. É o verde com a mesma saturação e luminosidade do dourado (HSL), para parecer irmão
+  dele. Contraste com o ícone preto: 9,4:1. Só **Objetivos** (gamificação) mantém o + dourado.
 
 ### Neutral
 - **Carbono fundo** (#1A2227): fundo do app. **Carbono superfície** (#222C32): cartões e linhas.
@@ -138,7 +139,7 @@ acentos de papel único (azul-aço e verde-claro) e as cores semânticas do dinh
 ### Named Rules
 **The One Accent Rule.** O destaque da marca é um só — o dourado. Ação e conquista usam dois tons
 dele (dourado e dourado claro), não duas famílias de cor. O verde claro tem um único emprego (o +
-das finanças) e o azul-aço uma única leitura (neutra); nenhuma terceira cor de destaque entra
+dos módulos de dinheiro) e o azul-aço uma única leitura (neutra); nenhuma terceira cor de destaque entra
 sem papel próprio. *Tensão conhecida:* com um destaque só, ação e conquista ficam mais parecidas
 que na paleta antiga; se confundir no uso, separar de novo (ex.: prata para ação).
 
@@ -177,7 +178,7 @@ múltiplos de 4 (4, 8, 12, 16, 20); 16 é o padding interno padrão dos cartões
 cartão com 3 linhas — **Finanças pessoais**, **Investimentos** e **Objetivos** — e "Nível · XP"
 no rodapé. O bloco é centralizado na tela (espaçadores proporcionais), e o cartão ocupa 80% da
 largura (margens iguais), para as linhas não irem até as bordas. *Investimentos* abre um segundo
-índice com **Cripto** (ativa) e **Renda Fixa** e **Ações** como "Em breve". Todo módulo tem **seta
+índice com **Cripto**, **Renda Fixa** e **Ações**. Todo módulo tem **seta
 de volta** na AppBar (Cripto volta para Investimentos, Lançar para Finanças); o **menu lateral**
 (Categorias, Recorrentes, Configurações) só existe na Home. **Botão voltar do Android:** leva à tela
 pai (mapa em `ui/navegacao.py`: Cripto→Investimentos, Lançar/Fechamento→Finanças, os demais→hub) e só
@@ -213,15 +214,27 @@ missão, de ativo, do hub) em vez de "utilidade" (linha de lista, barra), mais g
 - **Outlined (`OutlinedButton`):** ações pouco frequentes (backup, "Atualizar preço", "Meta").
 
 ### FAB
-- **Cor:** dourado em Objetivos e Cripto; **verde claro (#5AC27D)** no módulo de finanças
-  (Finanças pessoais, Categorias, Recorrentes). Sempre `bgcolor` explícito (token de `cores.py`),
-  senão cai no azul padrão do tema.
+- **Regra para os módulos atuais e futuros:** o **+** de todo módulo de **dinheiro** (Finanças pessoais,
+  Categorias, Recorrentes, Cripto, Ações, Renda Fixa e qualquer módulo novo de investimento) é **verde
+  claro** (`cores.VERDE_CLARO`, #5AC27D). Dourado só em **Objetivos**. Sempre `bgcolor` explícito
+  (token de `cores.py`), senão cai no azul padrão do tema.
 
 ### Linha do hub (`ui/home.py`)
 - Bloco de ícone 40×40 (raio 12, fundo e borda de ícone, ícone dourado 20), título Sora 16/600,
   subtítulo Manrope 12 suave, chevron à direita; padding 14×11, divisórias de 1 px.
-- **Em breve:** linha com opacidade 0,6, sem toque, selo "Em breve" em pílula de contorno dourado.
-- Linha de **Investimentos** mostra o resumo real da carteira cripto (valor e lucro %).
+- **Em breve** (`em_breve=True`): linha com opacidade 0,6, sem toque, selo em pílula de contorno
+  dourado — para módulos futuros (hoje nenhum está em breve).
+- **The Descriptive-Row Rule:** o subtítulo de uma linha do hub é uma **descrição**, nunca um valor ou
+  percentual ("Cripto, renda fixa e ações", "Tesouro, CDB, LCI, LCA e IR"). Números ficam dentro do módulo.
+
+### Carteiras, trades e aplicações (`ui/carteira.py`, `ui/renda_fixa.py`)
+- **Carteira (Cripto, Ações):** cartão de resumo com alternância R$/US$, gráfico de barras da evolução
+  e um cartão por ativo (etiqueta de moeda, quantidade, preço médio, preço atual, lucro, meta e stop).
+- **Trades realizados** (rodapé de Cripto e Ações): cabeçalho com botão "Registrar", cartão-resumo (lucro
+  final, custos, taxa de acerto) e lista de trades (datas, dias, lucro e %); toque abre a edição.
+- **Aplicação de renda fixa:** título, instituição e tipo; pílulas (Pré/Pós/Híbrido, Isento de IR, FGC,
+  liquidez); rentabilidade em dourado; aplicado, valor atual (* se não informado) e rendimento; contador
+  de **dias desde o 1º aporte**, linha do IR (faixa atual e quando cai) e vencimento com barra de prazo.
 
 ### Chips (categorias)
 - Ícone + rótulo empilhados; fundo Carbono superfície quando não selecionado; **selecionado em
@@ -257,7 +270,7 @@ Qualquer nova leitura circular de progresso deve reusar esse padrão.
 
 ### Don't:
 - **Don't** adicionar `BoxShadow` — o sistema é plano.
-- **Don't** hardcodar hex nas telas nem usar o verde claro fora do + do módulo de finanças.
+- **Don't** hardcodar hex nas telas nem usar o verde claro fora do + dos módulos de dinheiro.
 - **Don't** introduzir uma terceira cor de destaque sem um papel próprio.
 - **Don't** voltar a usar Roboto/ícone de coroa ao lado do nome, nem os cartões brancos antigos.
 - **Don't** assumir que o tema claro está pronto: as superfícies são escuras fixas (revisão pendente).

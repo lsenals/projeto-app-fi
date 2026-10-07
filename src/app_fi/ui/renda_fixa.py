@@ -321,14 +321,14 @@ def criar_tela_renda_fixa(
         indexador_dd = ft.Dropdown(
             label="Rentabilidade", dense=True,
             options=[ft.DropdownOption(key=k, text=core.NOME_INDEXADOR[k]) for k in core.INDEXADORES],
-            value=existente.indexador if existente else None,
+            value=existente.indexador if existente else None, expand=True,
         )
         taxa = _campo_numero(_ROTULO_TAXA[existente.indexador] if existente else "Taxa",
                              texto_exato(existente.taxa) if existente and existente.taxa is not None else "")
         liquidez_dd = ft.Dropdown(
             label="Liquidez", dense=True,
             options=[ft.DropdownOption(key=k, text=core.NOME_LIQUIDEZ[k]) for k in core.LIQUIDEZES],
-            value=existente.liquidez if existente else None,
+            value=existente.liquidez if existente else None, expand=True,
         )
         isento = ft.Switch(label="Isento de IR (pessoa física)", value=existente.isento_ir if existente else False)
         valor_aporte = _campo_numero("Valor aplicado (R$)", "", visible=existente is None)
@@ -401,10 +401,9 @@ def criar_tela_renda_fixa(
             modal=True,
             title=ft.Text("Editar aplicação" if existente else "Nova aplicação"),
             content=ft.Column([
-                tipo_dd, tipo_info, nome, instituicao, corretora, indexador_dd, taxa, liquidez_dd, isento,
+                tipo_dd, tipo_info, nome, instituicao, corretora, ft.Row([indexador_dd]), taxa, ft.Row([liquidez_dd]), isento,
                 botao_aplicacao, valor_aporte, ft.Row([botao_venc, sem_venc], wrap=True, spacing=0), obs, erro,
-            ], tight=True, spacing=8, width=380, scroll=ft.ScrollMode.AUTO,
-                horizontal_alignment=ft.CrossAxisAlignment.STRETCH),  # seletores na largura dos campos
+            ], tight=True, spacing=8, width=380, scroll=ft.ScrollMode.AUTO),
             actions=[ft.TextButton("Cancelar", on_click=lambda e: _cancelar(existente.id if existente else None)),
                      ft.FilledButton("Salvar", on_click=salvar)],
         ))

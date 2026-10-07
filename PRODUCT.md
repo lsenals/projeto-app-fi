@@ -18,8 +18,8 @@ nem equipe planejados.
 App financeiro pessoal e gamificado. Existe para tornar o controle financeiro diário menos
 enfadonho, usando mecânicas de jogo (Objetivos Inteligentes com "PRs", ofensiva/streak,
 Sistema de Nível) sobre uma base sólida de lançamentos, fechamento mensal e relatórios. Desde
-2026-10-07 o app é um **hub de módulos**: Finanças pessoais, Investimentos (hoje só Cripto; Renda
-Fixa e Ações planejadas, aparecem como "Em breve") e Objetivos.
+2026-10-07 o app é um **hub de módulos**: Finanças pessoais, Investimentos (Cripto, Ações e Renda
+Fixa) e Objetivos.
 Sucesso é subjetivo — não há métrica de negócio — e é medido por "chegar a um estado pronto
 para lançar" caso algum dia isso fizesse sentido, e pelo aprendizado do processo de construir.
 
@@ -38,7 +38,8 @@ importação de fatura de cartão C6 (arquivo baixado do banco); lançamentos re
 configurados uma vez; exportação de relatório em HTML; acompanhamento de Objetivos
 (metas com critério de sucesso, ex.: saldo positivo seguido, redução de categoria, renda
 extra) e do Sistema de Nível (no rodapé da Home) e da ofensiva (em Objetivos); carteira de
-criptoativos lançada à mão, com preço atual informado pelo próprio usuário. Uso é 100% local — sem sincronização entre
+criptoativos e de ações lançadas à mão, diário de trades realizados e acompanhamento de renda fixa (dias
+desde o aporte e faixa de IR), sempre com o preço ou valor atual informado pelo próprio usuário. Uso é 100% local — sem sincronização entre
 dispositivos, sem backend, sem internet necessária pro app funcionar.
 
 ## Capabilities and Constraints
@@ -48,7 +49,8 @@ dispositivos, sem backend, sem internet necessária pro app funcionar.
 - **Dados:** SQLite local em modo WAL, sem backend externo — decisão consciente pra não
   introduzir complexidade de infra/time num projeto solo.
 - **Dinheiro:** sempre representado em centavos inteiros (evita bugs de casa decimal),
-  formatado via `core/money.py::format_brl`. **Exceção: criptoativos** (`core/crypto.py`), que usam
+  formatado via `core/money.py::format_brl`. **Exceção: investimentos** (`core/crypto.py`, que também serve às ações, `core/trades.py` e
+  `core/renda_fixa.py`), que usam
   `Decimal` exato — preço de cripto pode ser R$ 0,000021 e a quantidade tem até 8 casas — e têm
   moeda própria por ativo (R$ ou US$), com cotação do dólar informada à mão.
 - **Privacidade:** nenhum dado financeiro real ou número de cartão deve aparecer em código,
@@ -56,7 +58,7 @@ dispositivos, sem backend, sem internet necessária pro app funcionar.
 - **Mobile:** toolchain Android (Flutter 3.47.4 + SDK) instalada e `flet build apk` validado
   ponta a ponta (2026-09-23 e 2026-10-07). O APK é endurecido: **sem permissão de internet**, sem
   backup automático do Android. Ainda **não testado num aparelho**; será reconstruído ao final de
-  todas as alterações em andamento (hub, Cripto, fontes).
+  todas as alterações em andamento (hub, Cripto, Ações, Renda Fixa, fontes).
 - **Sem multiusuário/autenticação** — indefinidamente fora de escopo pro momento atual.
 
 ## Brand Commitments
