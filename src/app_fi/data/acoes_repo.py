@@ -1,14 +1,14 @@
-"""Carteira de criptoativos — as tabelas `crypto_*`.
+"""Carteira de ações — as tabelas `acoes_*` (008_acoes.sql).
 
-Fachada fina sobre `CarteiraRepo` (a lógica é a mesma das Ações): cada função é o método de uma
-instância com prefixo "crypto", mantendo a API que a tela e os testes já usam.
+Mesmo modelo de Cripto (`CarteiraRepo`), mas **sem catálogo**: os ativos (tickers como PETR4, VALE3,
+IVVB11) são cadastrados à mão pelo usuário.
 """
 
 from __future__ import annotations
 
 from app_fi.data.carteira_repo import CarteiraRepo
 
-_repo = CarteiraRepo("crypto")
+_repo = CarteiraRepo("acoes")
 
 list_assets = _repo.list_assets
 get_asset = _repo.get_asset

@@ -41,6 +41,7 @@ from app_fi.data.statement_files import read_statement
 from app_fi.report.csv_report import render_csv
 from app_fi.report.html_report import render_report
 from app_fi.ui import cores
+from app_fi.ui.acoes import criar_tela_acoes
 from app_fi.ui.cripto import criar_tela_cripto
 from app_fi.ui.home import criar_home
 from app_fi.ui.navegacao import pai_de
@@ -241,9 +242,13 @@ def main(page: ft.Page) -> None:
     montar_cripto = criar_tela_cripto(
         page, conn, body, voltar=lambda e: montar_investimentos(), confirmar=confirmar,
     )
+    montar_acoes = criar_tela_acoes(
+        page, conn, body, voltar=lambda e: montar_investimentos(), confirmar=confirmar,
+    )
     montar_hub, montar_investimentos = criar_home(
         page, conn, body, abrir_menu=abrir_menu, ir_financas=lambda: montar_home(),
         ir_objetivos=lambda: montar_objetivos(), ir_cripto=lambda: montar_cripto(),
+        ir_acoes=lambda: montar_acoes(),
     )
 
     async def ir_para_categorias(_e) -> None:
@@ -1826,6 +1831,7 @@ def main(page: ft.Page) -> None:
     montar_hub = _registrando_tela("hub", montar_hub)
     montar_investimentos = _registrando_tela("investimentos", montar_investimentos)
     montar_cripto = _registrando_tela("cripto", montar_cripto)
+    montar_acoes = _registrando_tela("acoes", montar_acoes)
     montar_home = _registrando_tela("financas", montar_home)
     montar_objetivos = _registrando_tela("objetivos", montar_objetivos)
     montar_categorias = _registrando_tela("categorias", montar_categorias)
