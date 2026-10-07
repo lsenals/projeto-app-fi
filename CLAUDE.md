@@ -86,6 +86,15 @@ do Obsidian (`C:\Users\le_se\AI-Projects\Obsidian\Obsidian Vault`, pasta `06-Pro
 não neste repositório — o repo é só código. Ver `CLAUDE.md` do vault para as convenções
 de notas. Ambos ficam abertos juntos no workspace `app-fi.code-workspace`.
 
+## Design e paleta
+
+Em 2026-10-07 a marca mudou para **grafite e dourado discreto** (vinda do canvas de design
+"FinApple – Nova Home", no claude.ai: https://claude.ai/artifact/GsMnTt1H4npwX6GNsfxLiv, fonte da
+verdade visual — não há link automático com o repositório). Tokens em `src/app_fi/ui/cores.py`
+(nunca hardcodar hex nas telas), logo em `src/assets/logo_finapple.svg`. Decisões em aberto (Home em
+hub, grupo "Investimentos", fontes Sora/Manrope, barra inferior) em Obsidian > 06-Projects >
+`FinApple — Nova Home (design)`. O `DESIGN.md` e o `PRODUCT.md` ainda descrevem a paleta neon antiga.
+
 ## O que evitar
 
 - Não introduzir Kivy, BeeWare ou outro framework de UI em paralelo ao Flet — escolha já

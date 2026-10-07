@@ -159,8 +159,10 @@ def _saudacao_mascote() -> ft.Control:
     claros do Painel de Finanças (mesmo fundo dark do resto do app)."""
     return ft.Row(
         [
+            # logo em SVG (traço dourado/prata, fundo transparente): o PNG antigo tinha o fundo
+            # pintado com o carbono da paleta anterior e apareceria como um quadrado na nova
             ft.Image(
-                src="mascote_poupanca.png", width=64, height=64,
+                src="logo_finapple.svg", width=56, height=65,
                 fit=ft.BoxFit.CONTAIN,
             ),
             ft.Text("Bem-vindo!", size=18, weight=ft.FontWeight.BOLD),
@@ -270,8 +272,8 @@ def main(page: ft.Page) -> None:
                 ft.Icon(ft.Icons.WORKSPACE_PREMIUM_ROUNDED, color=_COR_SECUNDARIA, size=26),
                 ft.Row(
                     [
-                        ft.Text("Fin", size=20, weight=ft.FontWeight.BOLD, color=_COR_PRIMARIA),
-                        ft.Text("Apple", size=20, weight=ft.FontWeight.BOLD, color=_COR_SECUNDARIA),
+                        ft.Text("Fin", size=20, weight=ft.FontWeight.BOLD, color=cores.TEXTO_TITULO),
+                        ft.Text("Apple", size=20, weight=ft.FontWeight.BOLD, color=_COR_PRIMARIA),
                     ],
                     spacing=0,
                 ),
