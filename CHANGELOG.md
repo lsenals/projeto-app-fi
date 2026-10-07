@@ -42,8 +42,7 @@
   (`#5AC27D`, mesma saturação e luminosidade do dourado); nos demais módulos segue dourado.
 - **Botão voltar do Android** passa a voltar uma tela (para o módulo pai) em vez de fechar o app; só
   no hub ele sai. Mapa de telas em `ui/navegacao.py`.
-- Botão **+** em verde claro em todos os módulos de dinheiro (inclui Cripto, Ações e Renda Fixa); só
-  Objetivos segue dourado. Subtítulos do hub e de Investimentos voltam a ser descrições, sem números.
+- Botão **+** em verde claro em **todos** os módulos (inclui Cripto, Ações, Renda Fixa e Objetivos). Subtítulos do hub e de Investimentos voltam a ser descrições, sem números.
 - Documentação alinhada: `DESIGN.md`, `PRODUCT.md`, `README.md` e `CLAUDE.md` descrevem a identidade
   e a navegação atuais.
 - Barra de XP, títulos dos cards, tabela do Fechamento e lista de lançamentos ajustados para telas

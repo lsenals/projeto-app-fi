@@ -122,9 +122,8 @@ registra em `main.py` (`_registrando_tela`) e a raiz fica com `can_pop=False` fo
 Tela nova ⇒ registrar o nome em `PAI_DA_TELA` **e** em `_registrando_tela` (um teste confere os dois) e dar
 ao + a cor da regra acima.
 "Finanças pessoais" é a antiga Home (`montar_home` em `main.py`); Lançar abre pelo botão + dela.
-**Regra do botão +:** em todo módulo de **dinheiro** (Finanças pessoais, Categorias, Recorrentes, Cripto,
-Ações, Renda Fixa e módulos de investimento futuros) é o **verde claro** `cores.VERDE_CLARO` (mesmo brilho
-do dourado); dourado só em Objetivos. **Subtítulos das linhas do hub e de Investimentos são descrições,
+**Regra do botão +:** **todo** FAB de criar (Finanças pessoais, Categorias, Recorrentes, Cripto, Ações, Renda
+Fixa, Objetivos e módulos futuros) é o **verde claro** `cores.VERDE_CLARO` (mesmo brilho do dourado). **Subtítulos das linhas do hub e de Investimentos são descrições,
 nunca números** (valores ficam dentro do módulo). O hub é centralizado na tela e
 o cartão ocupa 80% da largura (proporção, não largura fixa — `page.width` não é confiável no 1º desenho).
 Decisões e histórico em Obsidian > 06-Projects > `Finapple — Nova Home (design)`. `DESIGN.md` e

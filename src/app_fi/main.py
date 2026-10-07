@@ -1630,7 +1630,7 @@ def main(page: ft.Page) -> None:
             title=ft.Text("Objetivos"),
         )
         page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.ADD, bgcolor=_COR_PRIMARIA, on_click=lambda e: abrir_dialog_objetivo(),
+            icon=ft.Icons.ADD, bgcolor=cores.VERDE_CLARO, on_click=lambda e: abrir_dialog_objetivo(),
         )
 
         ano, mes = hoje.year, hoje.month

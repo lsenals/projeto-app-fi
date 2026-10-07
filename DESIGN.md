@@ -125,10 +125,10 @@ acentos de papel único (azul-aço e verde-claro) e as cores semânticas do dinh
 - **Azul-aço** (#8FB0BF): leitura neutra — hoje só o terceiro anel do Painel de Finanças.
 
 ### Accent (um único uso)
-- **Verde claro** (#5AC27D): exclusivo do botão **+** dos módulos de dinheiro — Finanças pessoais
-  (com Categorias e Recorrentes) e os de investimento (**Cripto, Ações, Renda Fixa**) — e de todo módulo
-  novo desse tipo. É o verde com a mesma saturação e luminosidade do dourado (HSL), para parecer irmão
-  dele. Contraste com o ícone preto: 9,4:1. Só **Objetivos** (gamificação) mantém o + dourado.
+- **Verde claro** (#5AC27D): exclusivo do botão **+** (criar) de **todos os módulos** — Finanças pessoais
+  (com Categorias e Recorrentes), Investimentos (**Cripto, Ações, Renda Fixa**), Objetivos e qualquer módulo
+  novo. É o verde com a mesma saturação e luminosidade do dourado (HSL), para parecer irmão dele.
+  Contraste com o ícone preto: 9,4:1.
 
 ### Neutral
 - **Carbono fundo** (#1A2227): fundo do app. **Carbono superfície** (#222C32): cartões e linhas.
@@ -139,7 +139,7 @@ acentos de papel único (azul-aço e verde-claro) e as cores semânticas do dinh
 ### Named Rules
 **The One Accent Rule.** O destaque da marca é um só — o dourado. Ação e conquista usam dois tons
 dele (dourado e dourado claro), não duas famílias de cor. O verde claro tem um único emprego (o +
-dos módulos de dinheiro) e o azul-aço uma única leitura (neutra); nenhuma terceira cor de destaque entra
+de criar, em todo módulo) e o azul-aço uma única leitura (neutra); nenhuma terceira cor de destaque entra
 sem papel próprio. *Tensão conhecida:* com um destaque só, ação e conquista ficam mais parecidas
 que na paleta antiga; se confundir no uso, separar de novo (ex.: prata para ação).
 
@@ -214,10 +214,10 @@ missão, de ativo, do hub) em vez de "utilidade" (linha de lista, barra), mais g
 - **Outlined (`OutlinedButton`):** ações pouco frequentes (backup, "Atualizar preço", "Meta").
 
 ### FAB
-- **Regra para os módulos atuais e futuros:** o **+** de todo módulo de **dinheiro** (Finanças pessoais,
-  Categorias, Recorrentes, Cripto, Ações, Renda Fixa e qualquer módulo novo de investimento) é **verde
-  claro** (`cores.VERDE_CLARO`, #5AC27D). Dourado só em **Objetivos**. Sempre `bgcolor` explícito
-  (token de `cores.py`), senão cai no azul padrão do tema.
+- **Regra para os módulos atuais e futuros:** **todo** botão **+** (FAB de criar) é **verde claro**
+  (`cores.VERDE_CLARO`, #5AC27D) — Finanças pessoais, Categorias, Recorrentes, Cripto, Ações, Renda Fixa,
+  Objetivos e qualquer módulo novo. Sempre `bgcolor` explícito (token de `cores.py`), senão cai no azul
+  padrão do tema.
 
 ### Linha do hub (`ui/home.py`)
 - Bloco de ícone 40×40 (raio 12, fundo e borda de ícone, ícone dourado 20), título Sora 16/600,
@@ -270,7 +270,7 @@ Qualquer nova leitura circular de progresso deve reusar esse padrão.
 
 ### Don't:
 - **Don't** adicionar `BoxShadow` — o sistema é plano.
-- **Don't** hardcodar hex nas telas nem usar o verde claro fora do + dos módulos de dinheiro.
+- **Don't** hardcodar hex nas telas nem usar o verde claro fora do botão + de criar.
 - **Don't** introduzir uma terceira cor de destaque sem um papel próprio.
 - **Don't** voltar a usar Roboto/ícone de coroa ao lado do nome, nem os cartões brancos antigos.
 - **Don't** assumir que o tema claro está pronto: as superfícies são escuras fixas (revisão pendente).
