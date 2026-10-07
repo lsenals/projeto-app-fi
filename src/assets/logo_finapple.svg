@@ -3,8 +3,9 @@
   <path d="M60 46V18M60 46L46 24M60 46L74 24M52 44L38 33M68 44L82 33" stroke="#A9B3B8" stroke-width="2"/>
   <path d="M60 46L92 64V112L60 130L28 112V64Z" stroke="#C2A15A" stroke-width="2.25"/>
   <path d="M28 64L51.5 82M92 64L68.5 82M28 112L51.5 94M92 112L68.5 94M60 46V78M60 98V130" stroke="#C2A15A" stroke-width="1.25" opacity="0.55"/>
-  <circle cx="60" cy="88" r="10" stroke="#C2A15A" stroke-width="2"/>
-  <path d="M60 81v2.5M67 88h-2.5M60 95v-2.5M53 88h2.5" stroke="#C2A15A" stroke-width="1.25"/>
-  <path d="M60 88L64 84.5" stroke="#A9B3B8" stroke-width="1.75"/>
-  <circle cx="60" cy="88" r="1.6" fill="#A9B3B8" stroke="none"/>
-</svg>
+  <!-- mostrador do cofre: aro grosso sobre fundo escuro (esconde as facetas), marcas de hora e ponteiros -->
+  <circle cx="60" cy="88" r="17" fill="#1A2227" stroke="#C2A15A" stroke-width="3"/>
+  <circle cx="60" cy="88" r="12.5" stroke="#C2A15A" stroke-width="1" opacity="0.6"/>
+  <path d="M60 76.5v3.5M71.5 88H68M60 99.5V96M48.5 88H52" stroke="#C2A15A" stroke-width="2"/>
+  <path d="M60 88V80M60 88L66 91.5" stroke="#E3C77E" stroke-width="2.25"/>
+  <circle cx="60" cy="88" r="2.2" fill="#E3C77E" stroke="none"/></svg>

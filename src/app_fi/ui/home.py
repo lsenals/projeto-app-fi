@@ -91,11 +91,11 @@ def criar_home(
         page.floating_action_button = None
         nivel = goals_core.calcular_nivel(goals_repo.count_achieved(conn))
         # espaçadores proporcionais centralizam o bloco na altura da tela (um pouco acima do meio, que
-        # parece mais centrado). O bloco tem ~315 px de altura: cabe em qualquer celular
+        # parece mais centrado). O bloco tem ~340 px de altura: cabe em qualquer celular
         body.controls = [ft.Column([
             ft.Container(expand=4),
             ft.Column([
-                ft.Image(src="logo_finapple.svg", width=84, height=98, fit=ft.BoxFit.CONTAIN),
+                ft.Image(src="logo_finapple.svg", width=104, height=121, fit=ft.BoxFit.CONTAIN),
                 _nome_marca(26),
                 ft.Text("Bem-vindo de volta! Para onde vamos?", size=14, color=cores.TEXTO_SUAVE),
             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=6),
