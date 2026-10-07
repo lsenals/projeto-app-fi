@@ -67,7 +67,7 @@ Nome do produto: **Finapple** (trocadilho "Pineapple" + Finanças), definido em 
 O nome técnico do pacote/repositório (`app_fi`/`app-fi`) permanece diferente do nome de
 produto por decisão consciente (renomear migraria dados de usuários já existentes — não é
 prioridade). Grafia: **"Finapple"** (a minúsculo), em todo o projeto. Logo: abacaxi lapidado
-em traço fino com uma fechadura de cofre (`src/assets/logo_finapple.svg`), sem símbolo extra ao
+em traço fino com uma roda de cofre (`src/assets/logo_finapple.svg`), sem símbolo extra ao
 lado do nome. Identidade: grafite e dourado discreto, fontes Sora (títulos) e Manrope (texto).
 Paleta, tokens e decisões documentados em `DESIGN.md`, `CLAUDE.md` e no vault Obsidian ("Finapple —
 Identidade Visual" e "Finapple — Nova Home (design)"); este arquivo não duplica esses detalhes.

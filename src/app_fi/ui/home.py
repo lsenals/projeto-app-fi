@@ -95,8 +95,10 @@ def criar_home(
         body.controls = [ft.Column([
             ft.Container(expand=4),
             ft.Column([
-                ft.Image(src="logo_finapple.svg", width=104, height=121, fit=ft.BoxFit.CONTAIN),
-                _nome_marca(26),
+                ft.Column([  # logo e nome juntos, sem o espaçamento do resto do bloco
+                    ft.Image(src="logo_finapple.svg", width=104, height=109, fit=ft.BoxFit.CONTAIN),
+                    _nome_marca(26),
+                ], spacing=0, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
                 ft.Text("Bem-vindo de volta! Para onde vamos?", size=14, color=cores.TEXTO_SUAVE),
             ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=6),
             _lista([

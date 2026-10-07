@@ -93,7 +93,7 @@ components:
 Finapple trata dinheiro a sério sem parecer um banco. A base é um dark mode carbono — um cofre
 quieto — onde quase tudo fica em tons de grafite e cinza-azulado e o **dourado** aparece só onde
 importa: uma ação, um recorde batido, uma barra subindo. O logo é um abacaxi lapidado em traço
-fino, com uma fechadura de cofre no centro: precisão e proteção, sem infantilizar. Os números são
+fino, com uma roda de cofre no centro: precisão e proteção, sem infantilizar. Os números são
 grandes e diretos, e nada compete com a leitura clara de quanto dinheiro entrou, saiu ou falta
 pra bater a meta.
 

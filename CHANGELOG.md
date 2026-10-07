@@ -3,7 +3,7 @@
 ## Não lançado (desenvolvimento pós-v1.0.0, a partir de 2026-10-07)
 
 ### Interface
-- Logo da Home maior (64x75 para 104x121 px) e **mostrador do cofre redesenhado**: aro grosso sobre fundo escuro, marcas de hora e ponteiros em dourado, para ler claramente como relógio de cofre (`assets/logo_finapple.svg`).
+- **Novo logo** (`assets/logo_finapple.svg`): abacaxi lapidado com hexágono esticado nas laterais, hexágono interno ligado aos vértices, cinco raios no topo e uma **roda de cofre** no centro (aro, 6 raios e manoplas). Na Home ele tem 104 px e o nome "Finapple" ficou colado a ele.
 - **Data nos lançamentos:** a tela "Lançar" e o diálogo de novo/editar lançamento ganharam o campo
   **Data** (padrão: hoje; seletor de calendário, de 2000 até hoje), para registrar gastos e receitas
   esquecidos ou de dias em que não houve acesso ao app. Na edição também dá para corrigir a data. Na
