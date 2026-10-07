@@ -26,6 +26,7 @@ def test_migrations_are_idempotent(tmp_path):
     )]
     assert versions == [
         "001_init", "002_seed", "003_recurring_forecast", "004_goals", "005_sort_order",
+        "006_crypto",
     ]
 
 

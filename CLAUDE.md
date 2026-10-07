@@ -62,6 +62,14 @@ pip install -e ".[dev]"
   efeito colateral) — facilita testar cálculos financeiros sem mockar nada.
 - Nomes de variáveis monetárias sempre explícitos sobre a unidade (`valor_reais`, não
   `valor`) — evita bugs de casas decimais/moeda mais adiante.
+- **Exceção à regra de centavos: criptoativos** (`core/crypto.py`, `data/crypto_repo.py`, tabelas
+  `crypto_*`). Preço de cripto pode ser R$ 0,000021 e a quantidade tem até 8 casas, então ali tudo é
+  `Decimal` (TEXT no banco) e só os totais exibidos são arredondados a centavos. Método de custo:
+  preço médio. Sem internet, o preço atual é informado à mão (cada preço vira um ponto do histórico
+  que alimenta o gráfico de evolução). O catálogo de ativos está duplicado de propósito em
+  `006_crypto.sql` e `CATALOGO_PRINCIPAIS` — um teste garante que não divirjam.
+- Telas novas vão em `src/app_fi/ui/` (uma função `criar_tela_x(...)` que devolve `montar()`), com a
+  paleta em `ui/cores.py`; `main.py` só liga a aba/rota.
 - Sem dependências novas sem necessidade clara — cada pacote a mais é peso extra para
   empacotar no mobile depois. Declarar em `pyproject.toml` (`dependencies`), não só instalar.
 - Commits pequenos e descritivos; não commitar `.venv/`, `__pycache__/`, builds, nem

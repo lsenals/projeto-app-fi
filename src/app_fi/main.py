@@ -40,19 +40,20 @@ from app_fi.data.db import get_db
 from app_fi.data.statement_files import read_statement
 from app_fi.report.csv_report import render_csv
 from app_fi.report.html_report import render_report
+from app_fi.ui import cores
+from app_fi.ui.cripto import criar_tela_cripto
 
 _MESES = [
     "", "janeiro", "fevereiro", "março", "abril", "maio", "junho",
     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ]
 
-# Identidade visual FinApple — abacaxi: a "coroa" remete a vitória/recordes,
-# verde e dourado vêm da própria fruta. Ver brand book em Obsidian > 06-Projects.
-_COR_PRIMARIA = "#00E676"      # verde esmeralda/limão — destaques, sucesso, botões
-_COR_SECUNDARIA = "#FFD600"    # amarelo dourado/neon — ofensiva, PRs, moedas
-_COR_TERCIARIA = "#40C4FF"     # azul claro — terceiro anel do Painel de Finanças
-_COR_FUNDO = ft.Colors.BLUE_GREY_900       # carbono — fundo do app
-_COR_SUPERFICIE = ft.Colors.BLUE_GREY_800  # carbono, um tom mais claro — cards/superfícies
+# Identidade visual FinApple (paleta em app_fi/ui/cores.py, compartilhada com as telas em ui/)
+_COR_PRIMARIA = cores.PRIMARIA
+_COR_SECUNDARIA = cores.SECUNDARIA
+_COR_TERCIARIA = cores.TERCIARIA
+_COR_FUNDO = cores.FUNDO
+_COR_SUPERFICIE = cores.SUPERFICIE
 
 _ICONES_CATEGORIA = {
     "Moradia": ft.Icons.HOME_ROUNDED,
@@ -282,7 +283,7 @@ def main(page: ft.Page) -> None:
 
     def ir_para(indice: int) -> None:
         page.navigation_bar.selected_index = indice
-        [montar_home, montar_lancamento_rapido, montar_objetivos][indice]()
+        [montar_home, montar_lancamento_rapido, montar_objetivos, montar_cripto][indice]()
 
     page.navigation_bar = ft.NavigationBar(
         selected_index=0,
@@ -290,6 +291,7 @@ def main(page: ft.Page) -> None:
             ft.NavigationBarDestination(icon=ft.Icons.HOME_ROUNDED, label="Home"),
             ft.NavigationBarDestination(icon=ft.Icons.ADD_CIRCLE_ROUNDED, label="Lançar"),
             ft.NavigationBarDestination(icon=ft.Icons.EMOJI_EVENTS_ROUNDED, label="Objetivos"),
+            ft.NavigationBarDestination(icon=ft.Icons.CURRENCY_BITCOIN, label="Cripto"),
         ],
         on_change=lambda e: ir_para(e.control.selected_index),
     )
@@ -315,6 +317,8 @@ def main(page: ft.Page) -> None:
 
     async def abrir_menu(_e) -> None:
         await page.show_drawer()
+
+    montar_cripto = criar_tela_cripto(page, conn, body, abrir_menu=abrir_menu, confirmar=confirmar)
 
     async def ir_para_categorias(_e) -> None:
         await page.close_drawer()
@@ -994,6 +998,7 @@ def main(page: ft.Page) -> None:
         page.update()
 
     def montar_fechamento() -> None:
+        page.navigation_bar.selected_index = 0  # telas secundárias: a seta volta pra Home
         ano, mes = mes_visualizado["ano"], mes_visualizado["mes"]
         page.appbar = ft.AppBar(
             leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_home()),
@@ -1031,6 +1036,7 @@ def main(page: ft.Page) -> None:
         page.update()
 
     def montar_categorias() -> None:
+        page.navigation_bar.selected_index = 0
         page.appbar = ft.AppBar(
             leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_home()),
             title=ft.Text("Categorias"),
@@ -1140,6 +1146,7 @@ def main(page: ft.Page) -> None:
         page.update()
 
     def montar_recorrentes() -> None:
+        page.navigation_bar.selected_index = 0
         page.appbar = ft.AppBar(
             leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_home()),
             title=ft.Text("Recorrentes"),
@@ -1851,6 +1858,7 @@ def main(page: ft.Page) -> None:
     tema_claro_switch.on_change = alternar_tema
 
     def montar_config() -> None:
+        page.navigation_bar.selected_index = 0
         page.appbar = ft.AppBar(
             leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_home()),
             title=ft.Text("Configurações"),
