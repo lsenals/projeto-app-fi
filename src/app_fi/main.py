@@ -21,6 +21,7 @@ from app_fi.core import goals as goals_core
 from app_fi.core.c6_import import ImportedRow, classify_rows
 from app_fi.core.dates import previous_month
 from app_fi.core.money import format_amount_input, format_brl, parse_brl
+from app_fi.core.painel import PainelFinancas, calcular_painel
 from app_fi.core.recurring import forecast as recurring_forecast
 from app_fi.core.summary import (
     category_breakdown,
@@ -92,10 +93,10 @@ def _formatar_mes_ano(iso: str) -> str:
     return f"{iso[5:7]}/{iso[0:4]}"
 
 
-def _anel_progresso(percentual: int, cor: str) -> ft.Control:
-    """Um ProgressRing com a porcentagem escrita no centro — Flet não tem
-    isso pronto, então empilhamos um Text por cima com ft.Stack."""
-    return ft.Stack(
+def _anel_progresso(percentual: int, rotulo: str, cor: str) -> ft.Control:
+    """Um ProgressRing com a porcentagem escrita no centro e o rótulo embaixo —
+    Flet não tem isso pronto, então empilhamos um Text por cima com ft.Stack."""
+    anel = ft.Stack(
         [
             ft.ProgressRing(
                 value=percentual / 100, color=cor,
@@ -109,6 +110,10 @@ def _anel_progresso(percentual: int, cor: str) -> ft.Control:
         ],
         width=64, height=64,
     )
+    return ft.Column(
+        [anel, ft.Text(rotulo, size=11, color=ft.Colors.GREY)],
+        spacing=4, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+    )
 
 
 def _card_saldo_meta(titulo: str, valor_cents: int, ratio: float, icone, cor: str) -> ft.Control:
@@ -117,21 +122,21 @@ def _card_saldo_meta(titulo: str, valor_cents: int, ratio: float, icone, cor: st
     return ft.Container(
         content=ft.Column(
             [
-                ft.Row(
-                    [
-                        ft.Container(
-                            content=ft.Icon(icone, color=ft.Colors.WHITE, size=16),
-                            bgcolor=cor, width=30, height=30, border_radius=100,
-                            alignment=ft.Alignment.CENTER,
-                        ),
-                        ft.Text(
-                            titulo, size=12, weight=ft.FontWeight.W_600, color=ft.Colors.GREY_700,
-                            max_lines=1, overflow=ft.TextOverflow.ELLIPSIS, expand=True,
-                        ),
-                    ],
-                    spacing=8,
+                ft.Container(
+                    content=ft.Icon(icone, color=ft.Colors.WHITE, size=16),
+                    bgcolor=cor, width=30, height=30, border_radius=100,
+                    alignment=ft.Alignment.CENTER,
                 ),
-                ft.Text(format_brl(valor_cents), size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK),
+                # título numa linha própria (até 2 linhas): ao lado do ícone ele ficava
+                # truncado ("Saldos da Sema…") em telas de celular
+                ft.Text(
+                    titulo, size=12, weight=ft.FontWeight.W_600, color=ft.Colors.GREY_700,
+                    max_lines=2, overflow=ft.TextOverflow.ELLIPSIS,
+                ),
+                ft.Text(
+                    format_brl(valor_cents), size=20, weight=ft.FontWeight.BOLD, color=ft.Colors.BLACK,
+                    max_lines=1, overflow=ft.TextOverflow.ELLIPSIS,
+                ),
                 ft.ProgressBar(value=ratio, color=cor, bgcolor=ft.Colors.GREY_200, border_radius=8, bar_height=6),
             ],
             spacing=8,
@@ -178,10 +183,11 @@ def _progresso_nivel(nivel: goals_core.NivelProgresso) -> ft.Control:
             ),
             ft.ProgressBar(
                 value=nivel.ratio, color=_COR_SECUNDARIA, bgcolor=ft.Colors.GREY_800,
-                border_radius=8, bar_height=8, width=200,
+                border_radius=8, bar_height=8,
             ),
         ],
         spacing=4,
+        expand=True,  # ocupa só o que sobra ao lado do mascote; largura fixa estourava em 390px
     )
 
 
@@ -194,32 +200,26 @@ def cabecalho_boas_vindas(nivel: goals_core.NivelProgresso) -> ft.Control:
     )
 
 
-# Painel de Finanças ainda não está ligado a dados reais — valores de exemplo
-# do mockup da marca, até existir um cálculo em core/ pra alimentar isso.
-_PAINEL_ANEIS = ((0, _COR_PRIMARIA), (20, _COR_SECUNDARIA), (10, _COR_TERCIARIA))
-_PAINEL_SALDO_SEMANA_CENTS = 10000
-_PAINEL_SALDO_SEMANA_RATIO = 0.35
-_PAINEL_META_POUPANCA_CENTS = 60000
-_PAINEL_META_POUPANCA_RATIO = 0.6
+_CORES_ANEIS = (_COR_PRIMARIA, _COR_SECUNDARIA, _COR_TERCIARIA)
 
 
-def painel_financas() -> ft.Control:
-    """Painel de Finanças — 3 anéis de progresso + 2 cards (Saldos da Semana,
-    Metas de Poupança)."""
+def painel_financas(painel: PainelFinancas) -> ft.Control:
+    """Painel de Finanças — 3 anéis de progresso + 2 cards (saldo dos últimos
+    7 dias e poupança do mês), alimentados por `core.painel.calcular_painel`."""
     return ft.Column(
         [
             ft.Row(
-                [_anel_progresso(p, c) for p, c in _PAINEL_ANEIS],
+                [_anel_progresso(a.percentual, a.rotulo, c) for a, c in zip(painel.aneis, _CORES_ANEIS)],
                 alignment=ft.MainAxisAlignment.SPACE_EVENLY,
             ),
             ft.Row(
                 [
                     _card_saldo_meta(
-                        "Saldos da Semana", _PAINEL_SALDO_SEMANA_CENTS, _PAINEL_SALDO_SEMANA_RATIO,
+                        "Saldo dos últimos 7 dias", painel.saldo_semana_cents, painel.saldo_semana_ratio,
                         ft.Icons.ATTACH_MONEY_ROUNDED, _COR_PRIMARIA,
                     ),
                     _card_saldo_meta(
-                        "Metas de Poupança", _PAINEL_META_POUPANCA_CENTS, _PAINEL_META_POUPANCA_RATIO,
+                        "Poupança do mês", painel.poupanca_mes_cents, painel.poupanca_mes_ratio,
                         ft.Icons.ACCOUNT_BALANCE_WALLET_ROUNDED, _COR_SECUNDARIA,
                     ),
                 ],
@@ -362,7 +362,9 @@ def main(page: ft.Page) -> None:
     saldo = ft.Text(size=22, weight=ft.FontWeight.BOLD)
     resumo = ft.Text(size=13, color=ft.Colors.GREY)
     mes_titulo = ft.Text(size=13, color=ft.Colors.GREY)
-    lista = ft.ListView(expand=True, spacing=2)
+    # padding embaixo: deixa a última linha rolar pra cima do botão flutuante "+"
+    lista = ft.ListView(expand=True, spacing=2, padding=ft.Padding(left=0, right=0, top=0, bottom=88))
+    painel_host = ft.Container()  # conteúdo recalculado em atualizar()
 
     def cabecalho_lista() -> ft.Control:
         return ft.Container(
@@ -402,6 +404,7 @@ def main(page: ft.Page) -> None:
         rows = repo.list_month(conn, ano, mes)
         t = month_totals(rows)
         mes_titulo.value = f"{_MESES[mes].capitalize()} {ano}"
+        painel_host.content = painel_financas(_dados_painel())
         saldo.value = f"Saldo do mês: {format_brl(t.balance_cents)}"
         resumo.value = (
             f"Entradas {format_brl(t.income_cents)}   ·   "
@@ -411,6 +414,20 @@ def main(page: ft.Page) -> None:
             ft.Text("Nenhum lançamento neste mês.", italic=True, color=ft.Colors.GREY)
         ]
         page.update()
+
+    def _dados_painel() -> PainelFinancas:
+        """Painel sempre olha para hoje (não para o mês navegado na lista abaixo).
+        Avalia os objetivos só para contar os batidos — quem grava o resultado é a
+        tela de Objetivos."""
+        ano_ant, mes_ant = previous_month(hoje.year, hoje.month)
+        rows_atual = repo.list_month(conn, hoje.year, hoje.month)
+        rows_anterior = repo.list_month(conn, ano_ant, mes_ant)
+        objetivos = goals_repo.list_active(conn)
+        batidos = sum(
+            1 for g in objetivos
+            if _avaliar_objetivo(g, rows_atual, rows_anterior, hoje.year, hoje.month).achieved
+        )
+        return calcular_painel([*rows_atual, *rows_anterior], hoje, batidos, len(objetivos))
 
     def montar_home() -> None:
         page.navigation_bar.selected_index = 0
@@ -433,7 +450,7 @@ def main(page: ft.Page) -> None:
         nivel = goals_core.calcular_nivel(goals_repo.count_achieved(conn))
         body.controls = [
             cabecalho_boas_vindas(nivel),
-            painel_financas(),
+            painel_host,
             ft.Divider(),
             ft.Row([
                 ft.IconButton(
@@ -926,34 +943,43 @@ def main(page: ft.Page) -> None:
         ]
 
         if comparacao:
-            tabela: ft.Control = ft.DataTable(
-                columns=[
-                    ft.DataColumn(ft.Text("Categoria")),
-                    ft.DataColumn(ft.Text(_MESES[mes][:3].capitalize()), numeric=True),
-                    ft.DataColumn(ft.Text(_MESES[mes_ant][:3].capitalize()), numeric=True),
-                    ft.DataColumn(ft.Text("Variação"), numeric=True),
-                ],
-                rows=[
-                    ft.DataRow(cells=[
-                        ft.DataCell(ft.Text(r.category)),
-                        ft.DataCell(ft.Text(format_brl(r.current_cents))),
-                        ft.DataCell(ft.Text(format_brl(r.previous_cents))),
-                        ft.DataCell(ft.Text(
-                            "—" if r.delta_pct is None else f"{r.delta_pct:+.0f}%",
-                            color=(
-                                ft.Colors.GREY if r.delta_pct is None or r.delta_pct == 0
-                                else ft.Colors.RED if r.delta_pct > 0
-                                else ft.Colors.GREEN
-                            ),
-                        )),
-                    ])
-                    for r in comparacao
-                ],
+            # colunas compactas + rolagem horizontal de segurança: com o espaçamento
+            # padrão a coluna "Variação" saía da tela em 390px e os valores quebravam em 2 linhas
+            tabela: ft.Control = ft.Row(
+                [ft.DataTable(
+                    column_spacing=14,
+                    horizontal_margin=6,
+                    columns=[
+                        ft.DataColumn(ft.Text("Categoria", size=12)),
+                        ft.DataColumn(ft.Text(_MESES[mes][:3].capitalize(), size=12), numeric=True),
+                        ft.DataColumn(ft.Text(_MESES[mes_ant][:3].capitalize(), size=12), numeric=True),
+                        ft.DataColumn(ft.Text("Var.", size=12), numeric=True),
+                    ],
+                    rows=[
+                        ft.DataRow(cells=[
+                            ft.DataCell(ft.Text(r.category, size=12)),
+                            ft.DataCell(ft.Text(format_brl(r.current_cents), size=12, no_wrap=True)),
+                            ft.DataCell(ft.Text(format_brl(r.previous_cents), size=12, no_wrap=True)),
+                            ft.DataCell(ft.Text(
+                                "—" if r.delta_pct is None else f"{r.delta_pct:+.0f}%",
+                                size=12,
+                                color=(
+                                    ft.Colors.GREY if r.delta_pct is None or r.delta_pct == 0
+                                    else ft.Colors.RED if r.delta_pct > 0
+                                    else ft.Colors.GREEN
+                                ),
+                            )),
+                        ])
+                        for r in comparacao
+                    ],
+                )],
+                scroll=ft.ScrollMode.AUTO,
             )
         else:
             tabela = ft.Text("Sem dados suficientes para comparar.", italic=True, color=ft.Colors.GREY)
 
         fechamento_conteudo.controls = [
+            ft.Text(f"{_MESES[mes].capitalize()} {d['ano']}", size=13, color=ft.Colors.GREY),
             resumo_row,
             ft.Divider(),
             ft.Text("Gastos por categoria", size=13, weight=ft.FontWeight.BOLD),
@@ -971,7 +997,7 @@ def main(page: ft.Page) -> None:
         ano, mes = mes_visualizado["ano"], mes_visualizado["mes"]
         page.appbar = ft.AppBar(
             leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_home()),
-            title=ft.Text(f"Fechamento — {_MESES[mes].capitalize()} {ano}"),
+            title=ft.Text("Fechamento"),  # o mês vai no corpo; título longo era truncado em 390px
             actions=[
                 ft.IconButton(icon=ft.Icons.DOWNLOAD, tooltip="Exportar HTML", on_click=exportar_html),
                 ft.IconButton(icon=ft.Icons.TABLE_CHART, tooltip="Exportar CSV", on_click=exportar_csv),
@@ -1011,7 +1037,7 @@ def main(page: ft.Page) -> None:
         )
         body.controls = [categorias_lista]
         page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.ADD, on_click=lambda e: abrir_dialog_categoria(),
+            icon=ft.Icons.ADD, bgcolor=_COR_PRIMARIA, on_click=lambda e: abrir_dialog_categoria(),
         )
         atualizar_categorias()
 
@@ -1119,7 +1145,7 @@ def main(page: ft.Page) -> None:
             title=ft.Text("Recorrentes"),
         )
         page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.ADD, on_click=lambda e: abrir_dialog_recorrencia(),
+            icon=ft.Icons.ADD, bgcolor=_COR_PRIMARIA, on_click=lambda e: abrir_dialog_recorrencia(),
         )
         body.controls = [recorrentes_lista]
         atualizar_recorrentes()
