@@ -165,12 +165,14 @@ irrelevante, é só pra app Windows nativo):
 Pra rodar `flet build apk`, abrir um terminal **novo** (as variáveis são de usuário, uma
 sessão já aberta antes da instalação não as tem).
 
-**Estado do APK (2026-10-07):** o build foi revalidado depois de reinstalar o ambiente e de endurecer o
-app (sem permissão de internet, sem backup automático). Ele **ainda não foi aberto num aparelho** e
-**será reconstruído ao final de todas as alterações em andamento** (hub, Cripto, fontes variáveis,
-nome "Finapple" no rótulo). A conferir no aparelho: pesos das fontes variáveis, **botão voltar do
-Android** (implementado, não verificável fora de um aparelho) e o app sem a permissão de internet.
-
+**Estado do APK (2026-10-07, 20h28):** reconstruído com tudo (hub, Investimentos, linha do tempo, campo de
+data, logo novo, fontes variáveis) — `build/apk/finapple.apk`, ~54,5 MB, `com.finapple.finapple`, rótulo
+"Finapple". Conferido no manifesto: **sem `INTERNET`** (só `ACCESS_NETWORK_STATE`, do Flutter) e
+`allowBackup=false`. **Ainda não foi aberto num aparelho** — a conferir: botão voltar do Android, pesos das
+fontes variáveis e o app sem internet. O tema claro fica para depois (decisão do usuário). O desenvolvimento
+segue no Windows (`python src/app_fi/main.py`); o app deve continuar multiplataforma. **Armadilha do build:**
+o Flutter precisa do `git` no PATH — num terminal sem ele o `flet build` falha com "Unable to determine
+engine version"; use `$env:Path = 'C:\Program Files\Git\cmd;' + $env:Path`.
 **Primeiro `flet build apk` de teste rodado com sucesso em 2026-09-23** (APK em
 `build/apk/finapple.apk`, ~54MB, `--org com.finapple --product Finapple --project finapple
 --arch arm64-v8a`). `flet build` gerencia a própria versão pinada do Flutter, separada da

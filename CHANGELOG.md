@@ -2,6 +2,9 @@
 
 ## Não lançado (desenvolvimento pós-v1.0.0, a partir de 2026-10-07)
 
+### Android
+- APK reconstruído em 2026-10-07 com todas as mudanças acima (54,5 MB, sem permissão de internet, sem backup automático). Ainda a testar num aparelho; tema claro adiado.
+
 ### Interface
 - **Novo logo** (`assets/logo_finapple.svg`): abacaxi lapidado com hexágono esticado nas laterais, hexágono interno ligado aos vértices, cinco raios no topo e uma **roda de cofre** no centro (aro, 6 raios e manoplas). Na Home ele tem 104 px e o nome "Finapple" ficou colado a ele.
 - **Data nos lançamentos:** a tela "Lançar" e o diálogo de novo/editar lançamento ganharam o campo
