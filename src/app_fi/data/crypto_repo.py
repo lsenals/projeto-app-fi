@@ -12,8 +12,12 @@ import sqlite3
 from decimal import Decimal
 
 from app_fi.core.crypto import (
-    Carteira, Operacao, calcular_posicao, montar_carteira, normalizar_simbolo,
+    Carteira, Operacao, calcular_posicao, montar_carteira, normalizar_simbolo, validar_moeda,
 )
+from app_fi.data import goals_repo  # app_settings (get_setting/set_setting)
+
+_CHAVE_COTACAO_USD = "usd_brl"
+_CHAVE_MOEDA_EXIBICAO = "crypto_display_currency"
 
 
 def _txt(valor: Decimal) -> str:
@@ -29,17 +33,52 @@ def get_asset(conn: sqlite3.Connection, asset_id: int) -> sqlite3.Row | None:
     return conn.execute("SELECT * FROM crypto_assets WHERE id = ?", (asset_id,)).fetchone()
 
 
-def add_custom_asset(conn: sqlite3.Connection, symbol: str, name: str) -> int:
+def add_custom_asset(conn: sqlite3.Connection, symbol: str, name: str, currency: str = "BRL") -> int:
     """Cadastra um ativo fora do catálogo. Levanta ValueError se o símbolo for inválido ou já existir."""
     simbolo = normalizar_simbolo(symbol)
     nome = (name or "").strip() or simbolo
+    moeda = validar_moeda(currency)
     if conn.execute("SELECT 1 FROM crypto_assets WHERE symbol = ?", (simbolo,)).fetchone():
         raise ValueError(f"{simbolo} já está na lista.")
     cur = conn.execute(
-        "INSERT INTO crypto_assets (symbol, name, is_custom) VALUES (?, ?, 1)", (simbolo, nome),
+        "INSERT INTO crypto_assets (symbol, name, is_custom, currency) VALUES (?, ?, 1, ?)",
+        (simbolo, nome, moeda),
     )
     conn.commit()
     return int(cur.lastrowid)
+
+
+def set_asset_currency(conn: sqlite3.Connection, asset_id: int, currency: str) -> None:
+    """Muda a moeda de um ativo. Só enquanto ele não tem operações: depois disso os números
+    já lançados seriam reinterpretados em outra moeda (1.000 US$ não vira 1.000 R$)."""
+    moeda = validar_moeda(currency)
+    if conn.execute("SELECT 1 FROM crypto_trades WHERE asset_id = ?", (asset_id,)).fetchone():
+        raise ValueError("Este ativo já tem operações — a moeda não pode mais ser trocada.")
+    # o preço informado antes da 1ª operação também é interpretado na moeda antiga: descarta
+    conn.execute("UPDATE crypto_assets SET currency = ?, current_price = NULL, price_updated_at = NULL WHERE id = ?",
+                 (moeda, asset_id))
+    conn.execute("DELETE FROM crypto_price_history WHERE asset_id = ?", (asset_id,))
+    conn.commit()
+
+
+def get_usd_rate(conn: sqlite3.Connection) -> Decimal | None:
+    """Reais por dólar, informado à mão. None se ainda não foi definido."""
+    valor = goals_repo.get_setting(conn, _CHAVE_COTACAO_USD, default=None)
+    return Decimal(valor) if valor else None
+
+
+def set_usd_rate(conn: sqlite3.Connection, rate: Decimal) -> None:
+    if rate <= 0:
+        raise ValueError("A cotação do dólar deve ser maior que zero.")
+    goals_repo.set_setting(conn, _CHAVE_COTACAO_USD, _txt(rate))
+
+
+def get_display_currency(conn: sqlite3.Connection) -> str:
+    return goals_repo.get_setting(conn, _CHAVE_MOEDA_EXIBICAO, default="BRL") or "BRL"
+
+
+def set_display_currency(conn: sqlite3.Connection, currency: str) -> None:
+    goals_repo.set_setting(conn, _CHAVE_MOEDA_EXIBICAO, validar_moeda(currency))
 
 
 def list_trades(conn: sqlite3.Connection, asset_id: int | None = None) -> list[sqlite3.Row]:
@@ -159,4 +198,6 @@ def load_wallet(conn: sqlite3.Connection) -> Carteira:
         list_assets(conn),
         list_trades(conn),
         conn.execute("SELECT * FROM crypto_price_history ORDER BY date").fetchall(),
+        moeda_exibicao=get_display_currency(conn),
+        cotacao_usd=get_usd_rate(conn),
     )

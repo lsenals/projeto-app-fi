@@ -121,3 +121,69 @@ def test_carteira_de_ponta_a_ponta(conn):
     assert ativo.simbolo == "ADA" and ativo.avaliacao.lucro == D(40)
     assert ativo.meta.atingiu_alvo  # 2,4 = 2 * 1,20
     assert c.resumo.lucro_pct == D(20)
+
+
+# ------------------------------------------------------------------- moedas
+
+def test_ativos_do_catalogo_comecam_em_reais(conn):
+    assert {a["currency"] for a in repo.list_assets(conn)} == {"BRL"}
+
+
+def test_trocar_a_moeda_antes_da_primeira_operacao(conn):
+    eth = _id(conn, "ETH")
+    repo.set_price(conn, eth, D("3000"), "2026-03-01")
+    repo.set_asset_currency(conn, eth, "USD")
+    a = repo.get_asset(conn, eth)
+    assert a["currency"] == "USD"
+    assert a["current_price"] is None  # o preço antigo estava na outra moeda: descartado
+    assert conn.execute("SELECT COUNT(*) FROM crypto_price_history").fetchone()[0] == 0
+
+
+def test_nao_troca_a_moeda_depois_de_ter_operacoes(conn):
+    eth = _id(conn, "ETH")
+    repo.add_trade(conn, asset_id=eth, side="buy", date="2026-01-01", quantity=D(1), unit_price=D(2000))
+    with pytest.raises(ValueError, match="já tem operações"):
+        repo.set_asset_currency(conn, eth, "USD")
+    assert repo.get_asset(conn, eth)["currency"] == "BRL"
+
+
+def test_moeda_invalida(conn):
+    with pytest.raises(ValueError):
+        repo.set_asset_currency(conn, _id(conn, "ETH"), "EUR")
+    with pytest.raises(ValueError):
+        repo.add_custom_asset(conn, "ZZZ", "Z", currency="EUR")
+
+
+def test_ativo_personalizado_em_dolar(conn):
+    novo = repo.add_custom_asset(conn, "xyz", "Meu Token", currency="USD")
+    assert repo.get_asset(conn, novo)["currency"] == "USD"
+
+
+def test_cotacao_do_dolar(conn):
+    assert repo.get_usd_rate(conn) is None
+    repo.set_usd_rate(conn, D("5.43"))
+    assert repo.get_usd_rate(conn) == D("5.43")
+    for ruim in (D(0), D(-1)):
+        with pytest.raises(ValueError):
+            repo.set_usd_rate(conn, ruim)
+
+
+def test_moeda_de_exibicao_persiste(conn):
+    assert repo.get_display_currency(conn) == "BRL"
+    repo.set_display_currency(conn, "USD")
+    assert repo.get_display_currency(conn) == "USD"
+    with pytest.raises(ValueError):
+        repo.set_display_currency(conn, "EUR")
+
+
+def test_carteira_usa_a_cotacao_e_a_moeda_de_exibicao_salvas(conn):
+    eth = _id(conn, "ETH")
+    repo.set_asset_currency(conn, eth, "USD")
+    repo.add_trade(conn, asset_id=eth, side="buy", date="2026-01-01", quantity=D(1), unit_price=D(2000))
+    repo.set_price(conn, eth, D(3000), "2026-02-01")
+    sem = repo.load_wallet(conn).resumo
+    assert sem.moeda == "BRL" and sem.ativos_sem_cotacao == 1   # falta a cotação
+    repo.set_usd_rate(conn, D(5))
+    assert repo.load_wallet(conn).resumo.valor_atual == D(15000)
+    repo.set_display_currency(conn, "USD")
+    assert repo.load_wallet(conn).resumo.valor_atual == D(3000)

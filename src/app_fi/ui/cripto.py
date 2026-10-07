@@ -60,38 +60,63 @@ def criar_tela_cripto(
 
     # ------------------------------------------------------------ componentes
 
-    def _card_resumo(r: core.ResumoCarteira) -> ft.Control:
-        aviso = (
-            [ft.Text(
+    def _card_resumo(r: core.ResumoCarteira, cotacao: Decimal | None, tem_ativo_em_dolar: bool) -> ft.Control:
+        m = r.moeda
+
+        def fmt(valor: Decimal) -> str:
+            return core.formatar_valor(valor, m)
+
+        avisos: list[ft.Control] = []
+        if r.ativos_sem_preco:
+            avisos.append(ft.Text(
                 f"{r.ativos_sem_preco} ativo(s) sem preço atual — contados pelo custo até você "
-                "informar o preço (botão no topo).",
-                size=11, color=cores.SECUNDARIA,
-            )]
-            if r.ativos_sem_preco else []
+                "informar o preço (botão no topo).", size=11, color=cores.SECUNDARIA,
+            ))
+        if r.ativos_sem_cotacao:
+            avisos.append(ft.Text(
+                f"{r.ativos_sem_cotacao} ativo(s) em outra moeda ficaram fora dos totais: informe a "
+                "cotação do dólar abaixo.", size=11, color=ft.Colors.RED,
+            ))
+
+        def trocar_moeda(e: ft.ControlEvent) -> None:
+            repo.set_display_currency(conn, e.control.selected[0] if e.control.selected else "BRL")
+            atualizar()
+
+        seletor_moeda = ft.SegmentedButton(
+            segments=[ft.Segment(value="BRL", label=ft.Text("R$")), ft.Segment(value="USD", label=ft.Text("US$"))],
+            selected=[m], on_change=trocar_moeda, show_selected_icon=False,
         )
+        texto_cotacao = (
+            f"Cotação do dólar: {core.formatar_preco(cotacao)}" if cotacao is not None
+            else "Cotação do dólar: não informada"
+        )
+        precisa_cotacao = tem_ativo_em_dolar or m == "USD"
         return ft.Container(
             content=ft.Column([
-                ft.Text("Valor atual da carteira", size=12, color=ft.Colors.GREY),
-                ft.Text(core.formatar_valor(r.valor_atual), size=28, weight=ft.FontWeight.BOLD),
+                ft.Row([ft.Text("Valor atual da carteira", size=12, color=ft.Colors.GREY, expand=True), seletor_moeda]),
+                ft.Text(fmt(r.valor_atual), size=28, weight=ft.FontWeight.BOLD),
                 ft.Row([
-                    _rotulo_valor("Total investido", core.formatar_valor(r.investido)),
+                    _rotulo_valor("Total investido", fmt(r.investido)),
                     _rotulo_valor(
-                        "Lucro / prejuízo",
-                        f"{core.formatar_valor(r.lucro_nao_realizado)}  ({core.formatar_pct(r.lucro_pct)})",
+                        "Lucro / prejuízo", f"{fmt(r.lucro_nao_realizado)}  ({core.formatar_pct(r.lucro_pct)})",
                         _cor(r.lucro_nao_realizado),
                     ),
                 ]),
                 ft.Row([
-                    _rotulo_valor("Já realizado (vendas)", core.formatar_valor(r.realizado), _cor(r.realizado)),
-                    _rotulo_valor("Resultado total", core.formatar_valor(r.resultado_total), _cor(r.resultado_total)),
+                    _rotulo_valor("Já realizado (vendas)", fmt(r.realizado), _cor(r.realizado)),
+                    _rotulo_valor("Resultado total", fmt(r.resultado_total), _cor(r.resultado_total)),
                 ]),
-                *aviso,
+                ft.TextButton(
+                    texto_cotacao, icon=ft.Icons.CURRENCY_EXCHANGE_ROUNDED, on_click=lambda e: abrir_cotacao(),
+                    style=ft.ButtonStyle(color=cores.SECUNDARIA if precisa_cotacao and cotacao is None else None),
+                ),
+                *avisos,
             ], spacing=10),
             padding=16, border_radius=20, bgcolor=cores.SUPERFICIE,
         )
 
-    def _card_evolucao(pontos: tuple[core.PontoEvolucao, ...]) -> ft.Control:
-        titulo = ft.Text("Evolução da carteira", size=14, weight=ft.FontWeight.BOLD)
+    def _card_evolucao(pontos: tuple[core.PontoEvolucao, ...], moeda: str) -> ft.Control:
+        titulo = ft.Text(f"Evolução da carteira ({core.simbolo_moeda(moeda)})", size=14, weight=ft.FontWeight.BOLD)
         if len(pontos) < 2:
             corpo: list[ft.Control] = [ft.Text(
                 "Informe o preço dos ativos em dias diferentes (botão no topo) para acompanhar a "
@@ -106,7 +131,7 @@ def criar_tela_cripto(
                     ft.Container(
                         height=max(4, int(altura * float(p.valor / teto))), width=22, border_radius=4,
                         bgcolor=ft.Colors.GREEN if p.valor >= p.investido else ft.Colors.RED,
-                        tooltip=f"{_data_br(p.data)}: {core.formatar_valor(p.valor)}",
+                        tooltip=f"{_data_br(p.data)}: {core.formatar_valor(p.valor, moeda)}",
                     ),
                     ft.Text(f"{p.data[8:10]}/{p.data[5:7]}", size=9, color=ft.Colors.GREY),
                 ], spacing=4, horizontal_alignment=ft.CrossAxisAlignment.CENTER, alignment=ft.MainAxisAlignment.END)
@@ -122,8 +147,9 @@ def criar_tela_cripto(
                 ),
                 ft.Text(
                     f"Verde: valor acima do investido · vermelho: abaixo. Desde {_data_br(primeiro.data)}; "
-                    f"hoje {core.formatar_valor(ultimo.valor)} para {core.formatar_valor(ultimo.investido)} "
-                    f"investidos ({core.formatar_valor(variacao)}).",
+                    f"hoje {core.formatar_valor(ultimo.valor, moeda)} para "
+                    f"{core.formatar_valor(ultimo.investido, moeda)} investidos "
+                    f"({core.formatar_valor(variacao, moeda)}).",
                     size=11, color=ft.Colors.GREY,
                 ),
             ]
@@ -141,13 +167,13 @@ def criar_tela_cripto(
             if m.atingiu_alvo:
                 estado = ft.Row([
                     ft.Icon(ft.Icons.CHECK_CIRCLE_ROUNDED, color=cores.SECUNDARIA, size=16),
-                    ft.Text(f"Meta de +{a.ganho_alvo_pct:f}% atingida! Alvo {core.formatar_preco(m.preco_alvo)}",
+                    ft.Text(f"Meta de +{a.ganho_alvo_pct:f}% atingida! Alvo {core.formatar_preco(m.preco_alvo, a.moeda)}",
                             size=12, color=cores.SECUNDARIA, weight=ft.FontWeight.BOLD),
                 ], spacing=6)
             else:
                 falta = f" · faltam {core.formatar_pct(m.falta_pct)} no preço" if m.falta_pct is not None else ""
                 estado = ft.Text(
-                    f"Meta +{a.ganho_alvo_pct:f}% → alvo {core.formatar_preco(m.preco_alvo)}{falta}",
+                    f"Meta +{a.ganho_alvo_pct:f}% → alvo {core.formatar_preco(m.preco_alvo, a.moeda)}{falta}",
                     size=12, color=ft.Colors.GREY,
                 )
             linhas += [
@@ -160,7 +186,7 @@ def criar_tela_cripto(
                 ft.Icon(ft.Icons.WARNING_AMBER_ROUNDED if m.atingiu_stop else ft.Icons.FLAG_ROUNDED,
                         color=ft.Colors.RED if m.atingiu_stop else ft.Colors.GREY, size=14),
                 ft.Text(
-                    f"Stop -{a.stop_pct:f}% ({core.formatar_preco(m.preco_stop)})"
+                    f"Stop -{a.stop_pct:f}% ({core.formatar_preco(m.preco_stop, a.moeda)})"
                     + (" — atingido!" if m.atingiu_stop else ""),
                     size=11, color=ft.Colors.RED if m.atingiu_stop else ft.Colors.GREY,
                 ),
@@ -181,20 +207,27 @@ def criar_tela_cripto(
             content=ft.Column([
                 ft.Row([
                     ft.Column([
-                        ft.Text(a.simbolo, size=17, weight=ft.FontWeight.BOLD),
+                        ft.Row([
+                            ft.Text(a.simbolo, size=17, weight=ft.FontWeight.BOLD),
+                            ft.Container(
+                                content=ft.Text(core.simbolo_moeda(a.moeda), size=10, color=ft.Colors.GREY),
+                                border=ft.Border.all(1, ft.Colors.GREY_700), border_radius=6,
+                                padding=ft.Padding(left=5, right=5, top=1, bottom=1),
+                            ),
+                        ], spacing=8),
                         ft.Text(a.nome, size=11, color=ft.Colors.GREY),
                     ], spacing=0, expand=True),
                     selo,
                 ]),
                 ft.Row([
                     _rotulo_valor("Quantidade", core.formatar_quantidade(pos.quantidade)),
-                    _rotulo_valor("Preço médio", core.formatar_preco(pos.preco_medio)),
-                    _rotulo_valor("Preço atual", core.formatar_preco(a.preco_atual) if a.preco_atual else "—"),
+                    _rotulo_valor("Preço médio", core.formatar_preco(pos.preco_medio, a.moeda)),
+                    _rotulo_valor("Preço atual", core.formatar_preco(a.preco_atual, a.moeda) if a.preco_atual else "—"),
                 ]),
                 ft.Row([
-                    _rotulo_valor("Investido", core.formatar_valor(pos.custo_total)),
-                    _rotulo_valor("Valor atual", core.formatar_valor(av.valor_atual) if av else "—"),
-                    _rotulo_valor("Lucro", core.formatar_valor(av.lucro) if av else "—", _cor(av.lucro if av else None)),
+                    _rotulo_valor("Investido", core.formatar_valor(pos.custo_total, a.moeda)),
+                    _rotulo_valor("Valor atual", core.formatar_valor(av.valor_atual, a.moeda) if av else "—"),
+                    _rotulo_valor("Lucro", core.formatar_valor(av.lucro, a.moeda) if av else "—", _cor(av.lucro if av else None)),
                 ]),
                 *_bloco_meta(a),
             ], spacing=10),
@@ -209,7 +242,9 @@ def criar_tela_cripto(
                     ft.Text(a.simbolo, size=14, weight=ft.FontWeight.BOLD),
                     ft.Text("posição encerrada", size=11, color=ft.Colors.GREY),
                 ], spacing=0, expand=True),
-                _rotulo_valor("Resultado realizado", core.formatar_valor(a.posicao.realizado), _cor(a.posicao.realizado)),
+                _rotulo_valor(
+                    "Resultado realizado", core.formatar_valor(a.posicao.realizado, a.moeda), _cor(a.posicao.realizado),
+                ),
             ]),
             padding=12, border_radius=14, bgcolor=cores.SUPERFICIE, ink=True,
             on_click=lambda e, ativo_id=a.id: abrir_detalhe(ativo_id),
@@ -250,7 +285,10 @@ def criar_tela_cripto(
                 padding=ft.Padding(left=16, right=16, top=48, bottom=16),
             )]
         else:
-            conteudo = [_card_resumo(carteira.resumo), _card_evolucao(carteira.evolucao)]
+            conteudo = [
+                _card_resumo(carteira.resumo, repo.get_usd_rate(conn), any(a.moeda == "USD" for a in carteira.ativos)),
+                _card_evolucao(carteira.evolucao, carteira.resumo.moeda),
+            ]
             if abertos:
                 conteudo += [ft.Text("Minha carteira", size=15, weight=ft.FontWeight.BOLD)]
                 conteudo += [_card_ativo(a) for a in abertos]
@@ -315,7 +353,7 @@ def criar_tela_cripto(
                     ft.Text(_data_br(op.data), size=12, color=ft.Colors.GREY, width=82),
                     ft.Text("Compra" if op.lado == "buy" else "Venda", size=12, width=50,
                             color=ft.Colors.GREEN if op.lado == "buy" else ft.Colors.RED),
-                    ft.Text(f"{core.formatar_quantidade(op.quantidade)} × {core.formatar_preco(op.preco_unitario)}",
+                    ft.Text(f"{core.formatar_quantidade(op.quantidade)} × {core.formatar_preco(op.preco_unitario, a.moeda)}",
                             size=12, expand=True, max_lines=1, overflow=ft.TextOverflow.ELLIPSIS),
                     ft.Icon(ft.Icons.EDIT_OUTLINED, size=14, color=ft.Colors.GREY),
                 ], spacing=6),
@@ -326,15 +364,15 @@ def criar_tela_cripto(
         ]
         info = [
             _rotulo_valor("Quantidade", core.formatar_quantidade(pos.quantidade)),
-            _rotulo_valor("Preço médio", core.formatar_preco(pos.preco_medio) if pos.quantidade > 0 else "—"),
+            _rotulo_valor("Preço médio", core.formatar_preco(pos.preco_medio, a.moeda) if pos.quantidade > 0 else "—"),
         ]
         info2 = [
-            _rotulo_valor("Preço atual", core.formatar_preco(a.preco_atual) if a.preco_atual else "—"),
+            _rotulo_valor("Preço atual", core.formatar_preco(a.preco_atual, a.moeda) if a.preco_atual else "—"),
             _rotulo_valor("Atualizado em", _data_br(a.data_preco) if a.data_preco else "—"),
         ]
         info3 = [
-            _rotulo_valor("Lucro não realizado", core.formatar_valor(av.lucro) if av else "—", _cor(av.lucro if av else None)),
-            _rotulo_valor("Realizado", core.formatar_valor(pos.realizado), _cor(pos.realizado)),
+            _rotulo_valor("Lucro não realizado", core.formatar_valor(av.lucro, a.moeda) if av else "—", _cor(av.lucro if av else None)),
+            _rotulo_valor("Realizado", core.formatar_valor(pos.realizado, a.moeda), _cor(pos.realizado)),
         ]
         page.show_dialog(ft.AlertDialog(
             modal=True,
@@ -372,6 +410,10 @@ def criar_tela_cripto(
         estado = {"lado": lado, "data": existente["date"] if existente else dt.date.today().isoformat()}
 
         ativos = repo.list_assets(conn)
+        moeda_ativo = {x["id"]: x["currency"] for x in ativos}
+        # a moeda só pode ser escolhida enquanto o ativo não tem operações (depois, os números já
+        # lançados ficariam reinterpretados em outra moeda)
+        estado["moeda"] = moeda_ativo.get(ativo_id) or repo.get_display_currency(conn)
         ativo_dd = ft.Dropdown(
             label="Ativo", editable=True, enable_filter=True, menu_height=320, dense=True,
             options=[ft.DropdownOption(key=str(x["id"]), text=f"{x['symbol']} — {x['name']}") for x in ativos],
@@ -380,12 +422,42 @@ def criar_tela_cripto(
         )
         qtd = _campo_numero("Quantidade", _texto_exato(Decimal(existente["quantity"])) if existente else "")
         preco = _campo_numero(
-            "Preço unitário (R$)", _texto_exato(Decimal(existente["unit_price"])) if existente else "",
+            "Preço unitário", _texto_exato(Decimal(existente["unit_price"])) if existente else "",
         )
         taxa = _campo_numero(
-            "Taxa (R$, opcional)",
+            "Taxa (opcional)",
             _texto_exato(Decimal(existente["fee"])) if existente and Decimal(existente["fee"]) > 0 else "",
         )
+        moeda_info = ft.Text(size=11, color=ft.Colors.GREY, visible=False)
+
+        def moeda_editavel() -> bool:
+            return existente is None and bool(ativo_dd.value) and not repo.list_trades(conn, int(ativo_dd.value))
+
+        def aplicar_moeda() -> None:
+            simbolo = core.simbolo_moeda(estado["moeda"])
+            preco.label, taxa.label = f"Preço unitário ({simbolo})", f"Taxa ({simbolo}, opcional)"
+            moeda_btn.selected = [estado["moeda"]]
+            moeda_btn.disabled = not moeda_editavel()
+            moeda_info.visible = bool(ativo_dd.value) and moeda_btn.disabled
+            moeda_info.value = f"Este ativo é negociado em {simbolo}; a moeda não muda depois da 1ª operação."
+
+        def trocar_moeda(e: ft.ControlEvent) -> None:
+            estado["moeda"] = e.control.selected[0] if e.control.selected else estado["moeda"]
+            aplicar_moeda()
+            recalcular()
+
+        moeda_btn = ft.SegmentedButton(
+            segments=[ft.Segment(value="BRL", label=ft.Text("R$ (real)")), ft.Segment(value="USD", label=ft.Text("US$ (dólar)"))],
+            selected=[estado["moeda"]], on_change=trocar_moeda, show_selected_icon=False,
+        )
+
+        def ao_escolher_ativo(_e) -> None:
+            if ativo_dd.value:
+                estado["moeda"] = moeda_ativo[int(ativo_dd.value)]
+            aplicar_moeda()
+            recalcular()
+
+        ativo_dd.on_select = ao_escolher_ativo
         nota = ft.TextField(label="Observação (opcional)", dense=True, value=(existente["note"] or "") if existente else "")
         total = ft.Text(size=12, color=ft.Colors.GREY)
         erro = _erro_texto()
@@ -401,7 +473,7 @@ def criar_tela_cripto(
                     bruto = q * p
                     liquido = bruto + (t or 0) if estado["lado"] == "buy" else bruto - (t or 0)
                     rotulo = "Total a pagar" if estado["lado"] == "buy" else "Total a receber"
-                    total.value = f"{rotulo}: {core.formatar_valor(liquido)}"
+                    total.value = f"{rotulo}: {core.formatar_valor(liquido, estado['moeda'])}"
                 else:
                     total.value = ""
             page.update()
@@ -435,7 +507,8 @@ def criar_tela_cripto(
         def novo_ativo(_e) -> None:
             _fechar()
             abrir_novo_ativo(lambda novo_id: abrir_operacao(novo_id, estado["lado"], voltar_para=voltar_para),
-                             lambda: abrir_operacao(ativo_id, estado["lado"], voltar_para=voltar_para))
+                             lambda: abrir_operacao(ativo_id, estado["lado"], voltar_para=voltar_para),
+                             estado["moeda"])
 
         def salvar(_e) -> None:
             erro.visible = False
@@ -452,6 +525,8 @@ def criar_tela_cripto(
                           note=(nota.value or "").strip() or None)
             try:
                 if existente is None:
+                    if moeda_editavel() and estado["moeda"] != moeda_ativo[int(ativo_dd.value)]:
+                        repo.set_asset_currency(conn, int(ativo_dd.value), estado["moeda"])
                     repo.add_trade(conn, asset_id=int(ativo_dd.value), **campos)
                 else:
                     repo.update_trade(conn, trade_id, **campos)
@@ -472,6 +547,7 @@ def criar_tela_cripto(
         ]
         if existente is not None:
             acoes.insert(0, ft.TextButton("Excluir", on_click=excluir, style=ft.ButtonStyle(color=ft.Colors.RED)))
+        aplicar_moeda()
         recalcular_inicial = existente is not None
         page.show_dialog(ft.AlertDialog(
             modal=True,
@@ -479,6 +555,7 @@ def criar_tela_cripto(
             content=ft.Column([
                 lado_btn, ativo_dd,
                 ft.TextButton("Ativo não está na lista? Cadastrar", on_click=novo_ativo, visible=existente is None),
+                moeda_btn, moeda_info,
                 qtd, preco, taxa, data_botao, nota, total, erro,
             ], tight=True, spacing=8, width=380, scroll=ft.ScrollMode.AUTO),
             actions=acoes,
@@ -486,14 +563,20 @@ def criar_tela_cripto(
         if recalcular_inicial:
             recalcular()
 
-    def abrir_novo_ativo(ao_criar: Callable[[int], None], ao_cancelar: Callable[[], None]) -> None:
+    def abrir_novo_ativo(ao_criar: Callable[[int], None], ao_cancelar: Callable[[], None], moeda: str = "BRL") -> None:
         simbolo = ft.TextField(label="Símbolo (ex.: ADA)", dense=True, capitalization=ft.TextCapitalization.CHARACTERS)
         nome = ft.TextField(label="Nome (ex.: Cardano)", dense=True)
+        moeda_btn = ft.SegmentedButton(
+            segments=[ft.Segment(value="BRL", label=ft.Text("R$ (real)")), ft.Segment(value="USD", label=ft.Text("US$ (dólar)"))],
+            selected=[moeda], show_selected_icon=False,
+        )
         erro = _erro_texto()
 
         def salvar(_e) -> None:
             try:
-                novo = repo.add_custom_asset(conn, simbolo.value or "", nome.value or "")
+                novo = repo.add_custom_asset(
+                    conn, simbolo.value or "", nome.value or "", moeda_btn.selected[0] if moeda_btn.selected else "BRL",
+                )
             except ValueError as ex:
                 return _mostrar_erro(erro, str(ex))
             _fechar()
@@ -505,7 +588,7 @@ def criar_tela_cripto(
 
         page.show_dialog(ft.AlertDialog(
             modal=True, title=ft.Text("Novo ativo"),
-            content=ft.Column([simbolo, nome, erro], tight=True, spacing=10, width=380),
+            content=ft.Column([simbolo, nome, ft.Text("Moeda em que você negocia este ativo", size=12, color=ft.Colors.GREY), moeda_btn, erro], tight=True, spacing=10, width=380),
             actions=[ft.TextButton("Cancelar", on_click=cancelar), ft.FilledButton("Cadastrar", on_click=salvar)],
         ))
 
@@ -514,7 +597,8 @@ def criar_tela_cripto(
     def abrir_preco(ativo_id: int) -> None:
         a = repo.get_asset(conn, ativo_id)
         atual = Decimal(a["current_price"]) if a["current_price"] else None
-        campo = _campo_numero("Preço atual (R$)", _texto_exato(atual) if atual else "", autofocus=True)
+        simbolo_m = core.simbolo_moeda(a["currency"])
+        campo = _campo_numero(f"Preço atual ({simbolo_m})", _texto_exato(atual) if atual else "", autofocus=True)
         erro = _erro_texto()
 
         def salvar(_e) -> None:
@@ -530,7 +614,7 @@ def criar_tela_cripto(
         page.show_dialog(ft.AlertDialog(
             modal=True, title=ft.Text(f"Preço de {a['symbol']}"),
             content=ft.Column([
-                ft.Text("Preço de 1 unidade em reais, hoje.", size=12, color=ft.Colors.GREY), campo, erro,
+                ft.Text(f"Preço de 1 unidade em {'dólares' if a['currency'] == 'USD' else 'reais'}, hoje.", size=12, color=ft.Colors.GREY), campo, erro,
             ], tight=True, spacing=10, width=380),
             actions=[ft.TextButton("Cancelar", on_click=lambda e: _cancelar(ativo_id)),
                      ft.FilledButton("Salvar", on_click=salvar)],
@@ -543,7 +627,7 @@ def criar_tela_cripto(
             return
         campos = {
             a.id: _campo_numero(
-                f"{a.simbolo} (R$)", _texto_exato(a.preco_atual) if a.preco_atual else "",
+                f"{a.simbolo} ({core.simbolo_moeda(a.moeda)})", _texto_exato(a.preco_atual) if a.preco_atual else "",
                 helper=f"Atualizado em {_data_br(a.data_preco)}" if a.data_preco else "Ainda sem preço",
             )
             for a in abertos
@@ -569,9 +653,38 @@ def criar_tela_cripto(
         page.show_dialog(ft.AlertDialog(
             modal=True, title=ft.Text("Atualizar preços"),
             content=ft.Column(
-                [ft.Text("Preço de 1 unidade, em reais, hoje.", size=12, color=ft.Colors.GREY), *campos.values(), erro],
+                [ft.Text("Preço de 1 unidade, na moeda de cada ativo, hoje.", size=12, color=ft.Colors.GREY), *campos.values(), erro],
                 tight=True, spacing=10, width=380, scroll=ft.ScrollMode.AUTO, height=min(460, 80 * len(campos) + 80),
             ),
+            actions=[ft.TextButton("Cancelar", on_click=lambda e: _fechar()), ft.FilledButton("Salvar", on_click=salvar)],
+        ))
+
+    # -- cotação do dólar (manual: o app não acessa a internet)
+
+    def abrir_cotacao() -> None:
+        atual = repo.get_usd_rate(conn)
+        campo = _campo_numero("Quantos reais vale 1 dólar (R$)", _texto_exato(atual) if atual else "", autofocus=True)
+        erro = _erro_texto()
+
+        def salvar(_e) -> None:
+            try:
+                valor = core.parse_decimal(campo.value)
+                if valor is None:
+                    raise ValueError("Informe a cotação.")
+                repo.set_usd_rate(conn, valor)
+            except ValueError as ex:
+                return _mostrar_erro(erro, str(ex))
+            _depois(None, "Cotação do dólar atualizada.")
+
+        page.show_dialog(ft.AlertDialog(
+            modal=True, title=ft.Text("Cotação do dólar"),
+            content=ft.Column([
+                ft.Text(
+                    "Usada para somar na carteira os ativos em dólar e em real. Vale a cotação de hoje "
+                    "para todo o histórico (não a do dia de cada compra). Atualize quando quiser.",
+                    size=12, color=ft.Colors.GREY,
+                ), campo, erro,
+            ], tight=True, spacing=10, width=380),
             actions=[ft.TextButton("Cancelar", on_click=lambda e: _fechar()), ft.FilledButton("Salvar", on_click=salvar)],
         ))
 
@@ -594,9 +707,9 @@ def criar_tela_cripto(
             except ValueError:
                 g = s = None
             if g is not None:
-                partes.append(f"Alvo: {core.formatar_preco(medio * (1 + g / 100))}")
+                partes.append(f"Alvo: {core.formatar_preco(medio * (1 + g / 100), a.moeda)}")
             if s is not None:
-                partes.append(f"Stop: {core.formatar_preco(medio * (1 - s / 100))}")
+                partes.append(f"Stop: {core.formatar_preco(medio * (1 - s / 100), a.moeda)}")
             previa.value = " · ".join(partes)
             page.update()
 
@@ -616,8 +729,8 @@ def criar_tela_cripto(
         page.show_dialog(ft.AlertDialog(
             modal=True, title=ft.Text(f"Meta de trade — {a.simbolo}"),
             content=ft.Column([
-                ft.Text(f"Seu preço médio é {core.formatar_preco(medio)}. A meta é calculada sobre ele "
-                        f"(ex.: 20% → alvo de {core.formatar_preco(medio * Decimal('1.2'))}).",
+                ft.Text(f"Seu preço médio é {core.formatar_preco(medio, a.moeda)}. A meta é calculada sobre ele "
+                        f"(ex.: 20% → alvo de {core.formatar_preco(medio * Decimal('1.2'), a.moeda)}).",
                         size=12, color=ft.Colors.GREY),
                 ganho, stop, previa, erro,
             ], tight=True, spacing=10, width=380),

@@ -66,7 +66,11 @@ pip install -e ".[dev]"
   `crypto_*`). Preço de cripto pode ser R$ 0,000021 e a quantidade tem até 8 casas, então ali tudo é
   `Decimal` (TEXT no banco) e só os totais exibidos são arredondados a centavos. Método de custo:
   preço médio. Sem internet, o preço atual é informado à mão (cada preço vira um ponto do histórico
-  que alimenta o gráfico de evolução). O catálogo de ativos está duplicado de propósito em
+  que alimenta o gráfico de evolução). **Moeda por ativo (BRL ou USD)**: todos os valores de um ativo
+  ficam na moeda dele (lucro % sem ruído de câmbio); só o resumo converte para a moeda de exibição
+  (alternância R$/US$ na tela), usando a cotação do dólar **informada à mão** (`app_settings`:
+  `usd_brl`, `crypto_display_currency`) — vale a cotação de hoje para todo o histórico. A moeda do
+  ativo só pode ser trocada antes da 1ª operação. O catálogo de ativos está duplicado de propósito em
   `006_crypto.sql` e `CATALOGO_PRINCIPAIS` — um teste garante que não divirjam.
 - Telas novas vão em `src/app_fi/ui/` (uma função `criar_tela_x(...)` que devolve `montar()`), com a
   paleta em `ui/cores.py`; `main.py` só liga a aba/rota.

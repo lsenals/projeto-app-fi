@@ -6,9 +6,14 @@ tudo é `Decimal` (exato, sem erro de ponto flutuante). Só os totais exibidos s
 arredondados para centavos, na hora de formatar.
 
 Método de custo: **preço médio** (o padrão no Brasil). A taxa de uma compra
-entra no custo; a taxa de uma venda sai do valor recebido. Preços e valores
-sempre em reais (BRL) — o app não fala com a internet, então não há cotação
-automática: o preço atual de cada ativo é informado manualmente.
+entra no custo; a taxa de uma venda sai do valor recebido.
+
+Moeda: cada ativo tem a sua (BRL ou USD) e **todos** os valores dele — compras,
+vendas, taxas, preço atual, lucro — ficam nessa moeda, sem ruído de câmbio no
+percentual. Só o resumo da carteira converte tudo para a moeda de exibição,
+usando a cotação do dólar informada à mão (o app não fala com a internet, então
+não há cotação automática nem do preço dos ativos nem do câmbio). A conversão
+usa a cotação *atual*, não a do dia de cada operação.
 """
 
 from __future__ import annotations
@@ -27,6 +32,25 @@ _OITO_CASAS = Decimal("0.00000001")
 
 # 1 satoshi de tolerância: evita rejeitar uma venda "de tudo" por sobra de arredondamento
 _TOLERANCIA_QTD = Decimal("0.000000001")
+
+MOEDAS = ("BRL", "USD")
+_SIMBOLO_MOEDA = {"BRL": "R$", "USD": "US$"}
+
+
+def validar_moeda(moeda: str) -> str:
+    if moeda not in MOEDAS:
+        raise ValueError("Moeda inválida: escolha R$ ou US$.")
+    return moeda
+
+
+def fator_conversao(de: str, para: str, cotacao_usd: Decimal | None) -> Decimal | None:
+    """Quanto multiplicar um valor em `de` para obter em `para`. `cotacao_usd` é quantos
+    reais valem 1 dólar. None quando a conversão precisa da cotação e ela não foi informada."""
+    if de == para:
+        return Decimal(1)
+    if cotacao_usd is None or cotacao_usd <= 0:
+        return None
+    return cotacao_usd if (de, para) == ("USD", "BRL") else Decimal(1) / cotacao_usd
 
 
 # ----------------------------------------------------------------- operações
@@ -144,6 +168,7 @@ class AtivoCarteira:
     id: int
     simbolo: str
     nome: str
+    moeda: str                   # moeda em que TODOS os valores do ativo estão ('BRL' | 'USD')
     posicao: Posicao
     preco_atual: Decimal | None
     data_preco: str | None
@@ -160,6 +185,8 @@ class AtivoCarteira:
 
 @dataclass(frozen=True)
 class ResumoCarteira:
+    moeda: str                  # moeda de exibição em que os totais abaixo estão
+    ativos_sem_cotacao: int     # ativos em outra moeda que ficaram de fora porque falta a cotação do dólar
     investido: Decimal          # custo do que está em carteira
     valor_atual: Decimal
     lucro_nao_realizado: Decimal
@@ -186,7 +213,8 @@ class Carteira:
 def parse_decimal(texto: str | None) -> Decimal | None:
     """Campo de texto -> Decimal. Vazio vira None. Aceita '1.234,56' (pt-BR) e,
     sem vírgula, o ponto como separador decimal ('0.5'). Levanta ValueError."""
-    s = (texto or "").strip().replace("R$", "").replace("%", "").replace(" ", "")
+    s = (texto or "").strip().replace("US$", "").replace("R$", "").replace("$", "")
+    s = s.replace("%", "").replace(" ", "")
     if not s:
         return None
     s = s.replace(".", "").replace(",", ".") if "," in s else s
@@ -212,8 +240,12 @@ def _operacao(row: Mapping) -> Operacao:
 
 def montar_carteira(
     ativos: Iterable[Mapping], operacoes: Iterable[Mapping], historico_precos: Iterable[Mapping],
+    *, moeda_exibicao: str = "BRL", cotacao_usd: Decimal | None = None,
 ) -> Carteira:
-    """Junta linhas do banco (ativos, operações, histórico de preços) no modelo da tela."""
+    """Junta linhas do banco (ativos, operações, histórico de preços) no modelo da tela.
+    Cada ativo continua na sua moeda; só o resumo e a evolução são convertidos para
+    `moeda_exibicao` (com `cotacao_usd` = reais por dólar, se houver ativos na outra moeda)."""
+    validar_moeda(moeda_exibicao)
     por_ativo: dict[int, list[Operacao]] = {}
     for row in operacoes:
         por_ativo.setdefault(row["asset_id"], []).append(_operacao(row))
@@ -233,7 +265,8 @@ def montar_carteira(
         if pos.quantidade > 0 and (ganho is not None or stop is not None):
             meta = progresso_meta(pos.preco_medio, preco, ganho, stop)
         itens.append(AtivoCarteira(
-            id=a["id"], simbolo=a["symbol"], nome=a["name"], posicao=pos, preco_atual=preco,
+            id=a["id"], simbolo=a["symbol"], nome=a["name"], moeda=validar_moeda(a["currency"]),
+            posicao=pos, preco_atual=preco,
             data_preco=a["price_updated_at"],
             avaliacao=avaliar(pos, preco) if pos.quantidade > 0 else None,
             ganho_alvo_pct=ganho, stop_pct=stop, meta=meta,
@@ -241,28 +274,36 @@ def montar_carteira(
         ))
     itens.sort(key=lambda x: (not x.em_carteira, -(x.avaliacao.valor_atual if x.avaliacao else x.posicao.custo_total)))
 
+    fatores = {a.id: fator_conversao(a.moeda, moeda_exibicao, cotacao_usd) for a in itens}
     return Carteira(
         ativos=tuple(itens),
-        resumo=_resumir(itens),
-        evolucao=tuple(_evolucao(itens, historico)),
+        resumo=_resumir(itens, moeda_exibicao, fatores),
+        evolucao=tuple(_evolucao(itens, historico, fatores)),
     )
 
 
-def _resumir(ativos: Iterable[AtivoCarteira]) -> ResumoCarteira:
+def _resumir(
+    ativos: Iterable[AtivoCarteira], moeda: str, fatores: Mapping[int, Decimal | None],
+) -> ResumoCarteira:
     investido = valor = realizado = ZERO
-    sem_preco = 0
+    sem_preco = sem_cotacao = 0
     for a in ativos:
-        realizado += a.posicao.realizado
+        fator = fatores[a.id]
+        if fator is None:
+            sem_cotacao += 1
+            continue
+        realizado += a.posicao.realizado * fator
         if not a.em_carteira:
             continue
-        investido += a.posicao.custo_total
+        investido += a.posicao.custo_total * fator
         if a.avaliacao is None:
-            valor += a.posicao.custo_total
+            valor += a.posicao.custo_total * fator
             sem_preco += 1
         else:
-            valor += a.avaliacao.valor_atual
+            valor += a.avaliacao.valor_atual * fator
     lucro = valor - investido
     return ResumoCarteira(
+        moeda=moeda, ativos_sem_cotacao=sem_cotacao,
         investido=investido, valor_atual=valor, lucro_nao_realizado=lucro,
         lucro_pct=lucro / investido * _CEM if investido > 0 else None,
         realizado=realizado, resultado_total=lucro + realizado, ativos_sem_preco=sem_preco,
@@ -271,6 +312,7 @@ def _resumir(ativos: Iterable[AtivoCarteira]) -> ResumoCarteira:
 
 def _evolucao(
     ativos: list[AtivoCarteira], historico: Mapping[int, list[tuple[str, Decimal]]],
+    fatores: Mapping[int, Decimal | None],
 ) -> list[PontoEvolucao]:
     """Valor da carteira em cada data em que algo aconteceu (operação ou preço
     informado). Em cada data, cada ativo vale: quantidade então em carteira × último
@@ -281,8 +323,9 @@ def _evolucao(
     for data in sorted(datas):
         valor = investido = ZERO
         for a in ativos:
+            fator = fatores[a.id]
             ops = [op for op in a.operacoes if op.data <= data]
-            if not ops:
+            if not ops or fator is None:
                 continue
             pos = calcular_posicao(ops)
             if pos.quantidade <= 0:
@@ -291,8 +334,8 @@ def _evolucao(
             pontos_preco += [(d, p) for d, p in historico.get(a.id, []) if d <= data]
             # ordena só por data (estável): em empate, o preço informado (adicionado depois) prevalece
             preco = max(enumerate(pontos_preco), key=lambda t: (t[1][0], t[0]))[1][1]
-            valor += pos.quantidade * preco
-            investido += pos.custo_total
+            valor += pos.quantidade * preco * fator
+            investido += pos.custo_total * fator
         if investido > 0:
             pontos.append(PontoEvolucao(data, valor, investido))
     return pontos
@@ -309,26 +352,32 @@ def formatar_quantidade(q: Decimal) -> str:
     return f"{inteiro},{frac}" if frac else inteiro
 
 
-def formatar_preco(p: Decimal) -> str:
-    """Preço unitário: 2 casas a partir de R$ 1; abaixo disso, mais casas (até 8)
-    para não virar 'R$ 0,00'. 34.9 -> 'R$ 34,90'  ·  0.000021 -> 'R$ 0,000021'"""
+def simbolo_moeda(moeda: str) -> str:
+    return _SIMBOLO_MOEDA[validar_moeda(moeda)]
+
+
+def formatar_preco(p: Decimal, moeda: str = "BRL") -> str:
+    """Preço unitário: 2 casas a partir de 1; abaixo disso, mais casas (até 8) para não
+    virar 'R$ 0,00'. 34.9 -> 'R$ 34,90'  ·  0.000021 -> 'R$ 0,000021'  ·  USD -> 'US$ 34,90'"""
+    simbolo = simbolo_moeda(moeda)
     sinal = "-" if p < 0 else ""
     p = abs(p)
     if p >= 1:
-        return f"{sinal}{format_brl(_centavos(p))}"
+        return f"{sinal}{formatar_valor(p, moeda)}"
     texto = f"{p.quantize(_OITO_CASAS, rounding=ROUND_HALF_UP):f}".rstrip("0")
     inteiro, _, frac = texto.partition(".")
     frac = frac.ljust(2, "0")
-    return f"{sinal}R$ {inteiro or '0'},{frac}"
+    return f"{sinal}{simbolo} {inteiro or '0'},{frac}"
 
 
 def _centavos(valor: Decimal) -> int:
     return int((valor * _CEM).quantize(Decimal(1), rounding=ROUND_HALF_UP))
 
 
-def formatar_valor(valor: Decimal) -> str:
-    """Total em reais, arredondado para centavos: 5049.101 -> 'R$ 5.049,10'"""
-    return format_brl(_centavos(valor))
+def formatar_valor(valor: Decimal, moeda: str = "BRL") -> str:
+    """Total arredondado para centavos: 5049.101 -> 'R$ 5.049,10'  ·  USD -> 'US$ 5.049,10'"""
+    texto = format_brl(_centavos(valor))  # formato pt-BR com sinal; troca só o símbolo
+    return texto if moeda == "BRL" else texto.replace("R$", simbolo_moeda(moeda), 1)
 
 
 def formatar_pct(pct: Decimal | None) -> str:

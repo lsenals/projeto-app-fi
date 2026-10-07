@@ -1,5 +1,27 @@
 # Changelog
 
+## Não lançado (desenvolvimento pós-v1.0.0, a partir de 2026-10-07)
+
+### Criptoativos (nova aba "Cripto")
+- Carteira lançada à mão: compras e vendas, preço médio, lucro/prejuízo realizado e não realizado,
+  total investido, evolução do valor da carteira e **metas de trade** (ganho % sobre o preço médio,
+  stop opcional) com barra de progresso. Catálogo dos 40 principais ativos + cadastro de outros.
+- **Moeda por ativo (R$ ou US$)**, alternância de exibição R$/US$ no resumo e cotação do dólar
+  informada à mão (o app não acessa a internet).
+- Valores em `Decimal` exato (exceção à regra de centavos inteiros); migrações 006 e 007.
+
+### Home
+- Painel de Finanças ligado a dados reais (objetivos batidos, gasto/renda, dia do mês, saldo dos
+  últimos 7 dias, poupança do mês).
+
+### Segurança (APK)
+- Sem permissão de internet; backup automático do Android desligado; escape de HTML no relatório e
+  neutralização de fórmulas no CSV.
+
+### Interface
+- Barra de XP, títulos dos cards, tabela do Fechamento e lista da Home ajustados para telas de
+  celular; barra inferior marca "Home" nas telas secundárias.
+
 ## v1.0.0 — 2026-09-15
 
 Primeira versão fechada do FinApple (antes "App FI").

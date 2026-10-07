@@ -3,7 +3,7 @@ from decimal import Decimal as D
 import pytest
 
 from app_fi.core.crypto import (
-    CATALOGO_PRINCIPAIS, Operacao, avaliar, calcular_posicao, formatar_pct, formatar_preco,
+    CATALOGO_PRINCIPAIS, Operacao, avaliar, calcular_posicao, fator_conversao, formatar_pct, formatar_preco,
     formatar_quantidade, formatar_valor, montar_carteira, normalizar_simbolo, parse_decimal,
     progresso_meta,
 )
@@ -127,10 +127,11 @@ def test_meta_sem_preco_atual_nao_quebra():
 
 # ----------------------------------------------------------------- carteira
 
-def _ativo(id, simbolo, preco=None, ganho=None, stop=None, data="2026-03-01"):
+def _ativo(id, simbolo, preco=None, ganho=None, stop=None, data="2026-03-01", moeda="BRL"):
     return {
         "id": id, "symbol": simbolo, "name": simbolo, "current_price": preco,
         "price_updated_at": data if preco else None, "target_gain_pct": ganho, "stop_loss_pct": stop,
+        "currency": moeda,
     }
 
 
@@ -254,3 +255,78 @@ def test_normalizar_simbolo():
 def test_catalogo_nao_tem_simbolos_repetidos():
     simbolos = [s for s, _ in CATALOGO_PRINCIPAIS]
     assert len(simbolos) == len(set(simbolos)) and {"BTC", "ETH", "ADA"} <= set(simbolos)
+
+
+# ------------------------------------------------------------------- moedas
+
+def test_fator_de_conversao():
+    assert fator_conversao("BRL", "BRL", None) == D(1)
+    assert fator_conversao("USD", "USD", None) == D(1)
+    assert fator_conversao("USD", "BRL", D("5")) == D(5)
+    assert fator_conversao("BRL", "USD", D("5")) == D("0.2")
+    assert fator_conversao("USD", "BRL", None) is None
+    assert fator_conversao("USD", "BRL", D(0)) is None
+
+
+def test_ativo_em_dolar_exibido_em_reais_converte_pela_cotacao():
+    ativos = [_ativo(1, "ETH", preco="3000", moeda="USD")]
+    ops = [_trade(1, 1, "buy", "2026-01-01", "2", "2000")]   # custo US$ 4.000, vale US$ 6.000
+    c = montar_carteira(ativos, ops, [], moeda_exibicao="BRL", cotacao_usd=D("5"))
+    r = c.resumo
+    assert (r.moeda, r.investido, r.valor_atual, r.lucro_nao_realizado) == ("BRL", D(20000), D(30000), D(10000))
+    assert r.lucro_pct == D(50)  # o percentual não depende do câmbio
+    (a,) = c.ativos
+    assert a.moeda == "USD" and a.avaliacao.lucro == D(2000)  # o ativo continua em dólar
+
+
+def test_carteira_mista_soma_na_moeda_de_exibicao():
+    ativos = [_ativo(1, "ETH", preco="3000", moeda="USD"), _ativo(2, "ADA", preco="3")]
+    ops = [_trade(1, 1, "buy", "2026-01-01", "1", "2000"), _trade(2, 2, "buy", "2026-01-01", "100", "2")]
+    r_brl = montar_carteira(ativos, ops, [], moeda_exibicao="BRL", cotacao_usd=D("5")).resumo
+    assert r_brl.investido == D(10200) and r_brl.valor_atual == D(15300)   # 1*2000*5 + 200 | 3000*5 + 300
+    r_usd = montar_carteira(ativos, ops, [], moeda_exibicao="USD", cotacao_usd=D("5")).resumo
+    assert r_usd.investido == D(2040) and r_usd.valor_atual == D(3060)     # 2000 + 200/5 | 3000 + 300/5
+
+
+def test_sem_cotacao_o_ativo_em_outra_moeda_fica_de_fora_e_e_sinalizado():
+    ativos = [_ativo(1, "ETH", preco="3000", moeda="USD"), _ativo(2, "ADA", preco="3")]
+    ops = [_trade(1, 1, "buy", "2026-01-01", "1", "2000"), _trade(2, 2, "buy", "2026-01-01", "100", "2")]
+    r = montar_carteira(ativos, ops, [], moeda_exibicao="BRL", cotacao_usd=None).resumo
+    assert r.ativos_sem_cotacao == 1
+    assert r.investido == D(200) and r.valor_atual == D(300)
+
+
+def test_realizado_de_ativo_em_dolar_tambem_converte():
+    ativos = [_ativo(1, "ETH", moeda="USD")]
+    ops = [_trade(1, 1, "buy", "2026-01-01", "1", "2000"), _trade(2, 1, "sell", "2026-02-01", "1", "2500")]
+    r = montar_carteira(ativos, ops, [], moeda_exibicao="BRL", cotacao_usd=D("5.5")).resumo
+    assert r.realizado == D(2750)
+
+
+def test_evolucao_converte_cada_ativo():
+    ativos = [_ativo(1, "ETH", preco="3000", moeda="USD")]
+    ops = [_trade(1, 1, "buy", "2026-01-01", "1", "2000")]
+    hist = [{"asset_id": 1, "date": "2026-02-01", "price": "3000"}]
+    serie = montar_carteira(ativos, ops, hist, moeda_exibicao="BRL", cotacao_usd=D("5")).evolucao
+    assert [(p.valor, p.investido) for p in serie] == [(D(10000), D(10000)), (D(15000), D(10000))]
+
+
+def test_moeda_de_exibicao_invalida_e_recusada():
+    with pytest.raises(ValueError):
+        montar_carteira([], [], [], moeda_exibicao="EUR")
+    with pytest.raises(ValueError):
+        montar_carteira([_ativo(1, "X", moeda="EUR")], [_trade(1, 1, "buy", "2026-01-01", "1", "1")], [])
+
+
+def test_formatacao_em_dolar():
+    assert formatar_valor(D("5049.101"), "USD") == "US$ 5.049,10"
+    assert formatar_valor(D("-12.5"), "USD") == "-US$ 12,50"
+    assert formatar_preco(D("34.9"), "USD") == "US$ 34,90"
+    assert formatar_preco(D("0.000021"), "USD") == "US$ 0,000021"
+    assert formatar_preco(D("-0.5"), "USD") == "-US$ 0,50"
+    assert formatar_preco(D("34.9")) == "R$ 34,90"  # padrão segue em reais
+
+
+def test_parse_decimal_aceita_simbolo_de_dolar():
+    assert parse_decimal("US$ 1.234,50") == D("1234.50")
+    assert parse_decimal("$3.5") == D("3.5")
