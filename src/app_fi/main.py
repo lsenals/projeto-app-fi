@@ -13,6 +13,7 @@ import asyncio
 import datetime as dt
 import os
 import sqlite3
+from pathlib import Path
 
 import flet as ft
 
@@ -1850,4 +1851,12 @@ def main(page: ft.Page) -> None:
 
 
 if __name__ == "__main__":
-    ft.run(main)
+    # assets_dir explícito (em vez do padrão "assets", que o Flet resolve a
+    # partir de sys.argv[0] — quebra quando main.py é importado por outro
+    # script, como o launcher fino de build em src/main.py, ou testado via
+    # `python -c "..."`). __file__ sempre aponta pro app_fi/main.py de
+    # verdade, então isso funciona em qualquer forma de invocação. Os assets
+    # ficam em src/assets/ (fora do pacote app_fi) porque o `flet build`
+    # também exige que fiquem ao lado do main.py que ele usa (src/main.py) —
+    # um único diretório físico serve os dois cenários.
+    ft.run(main, assets_dir=str(Path(__file__).parent.parent / "assets"))

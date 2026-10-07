@@ -108,13 +108,40 @@ irrelevante, é só pra app Windows nativo):
 Pra rodar `flet build apk`, abrir um terminal **novo** (as variáveis são de usuário, uma
 sessão já aberta antes da instalação não as tem).
 
+**Primeiro `flet build apk` de teste rodado com sucesso em 2026-09-23** (APK em
+`build/apk/finapple.apk`, ~54MB, `--org com.finapple --product FinApple --project finapple
+--arch arm64-v8a`). `flet build` gerencia a própria versão pinada do Flutter, separada da
+instalada em `C:\src\flutter` — baixou Flutter 3.44.8 em `C:\Users\le_se\flutter\3.44.8` na
+primeira execução (normal, não é um erro). Três bloqueios de ambiente encontrados e
+resolvidos nessa primeira tentativa:
+- Console do Windows em `cp1252` quebra com o emoji `✅` que o Flet imprime — rodar com
+  `PYTHONIOENCODING=utf-8 PYTHONUTF8=1` no ambiente.
+- O wrapper novo do Android CLI (que substituiu o `sdkmanager` legado) trocou a sintaxe de
+  pacote de `platforms;android-35` pra `platforms/android-35` (`;` → `/`). O instalador
+  interno do `flet build` ainda usa a sintaxe antiga e falha ao tentar instalar
+  automaticamente — instalar manualmente antes, com a sintaxe nova:
+  `sdkmanager.bat "platforms/android-35"` e `"build-tools/35.0.0"`.
+- Flutter precisa criar symlinks mesmo em build Android — exige o **Modo de Desenvolvedor**
+  do Windows ativado (`start ms-settings:developers`).
+
+**Layout `src/` exigiu um launcher fino** — `flet build` exige um `main.py` direto na pasta
+apontada por `[tool.flet.app] path`, e essa pasta vira a raiz do app empacotado. Como
+`app_fi/main.py` usa imports absolutos (`from app_fi.core import ...`) em todo o projeto,
+apontar `path` direto pra `src/app_fi/` quebraria esses imports em runtime (o conteúdo viraria
+a raiz, sem a pasta `app_fi/` para resolver). Solução: `path = "src"` (preserva `app_fi/` como
+pacote real dentro do bundle) + `src/main.py` como launcher fino (`from app_fi.main import
+main`) só para o build encontrar um entry point. `python src/app_fi/main.py` continua sendo o
+comando de desenvolvimento desktop, sem mudança.
+
 ## Assets (imagens)
 
-Ficam em `src/app_fi/assets/` — é onde `ft.run()` procura por padrão (`assets_dir="assets"`,
-resolvido a partir do diretório do script). **Pegadinha:** essa resolução usa `sys.argv[0]`,
-então só funciona rodando o arquivo de verdade (`python src/app_fi/main.py`) — testar via
-`python -c "..."` quebra o carregamento de assets (resolve pro cwd, dá 404) porque não há um
-`sys.argv[0]` real apontando pro arquivo.
+Ficam em **`src/assets/`** (não dentro do pacote `app_fi/` — mudou em 2026-09-23). Motivo:
+o `flet build` também exige que os assets fiquem ao lado do `main.py` que ele usa
+(`src/main.py`, ver seção Mobile acima), então um único diretório fora do pacote serve tanto
+o desktop quanto o build mobile. `main.py` passa `assets_dir` explícito pro `ft.run()`
+(`Path(__file__).parent.parent / "assets"`) em vez de depender do padrão implícito do Flet,
+que resolve via `sys.argv[0]` e quebra quando o arquivo é importado por outro script (como o
+launcher de build) ou testado via `python -c "..."`.
 
 Mascotes do abacaxi (2026-09-15, ilustrações fornecidas pelo usuário):
 - `mascote_poupanca.png` — o principal, usado no cabeçalho de boas-vindas/Nível da Home.

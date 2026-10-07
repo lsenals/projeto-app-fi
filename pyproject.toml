@@ -22,11 +22,22 @@ dev = [
     "pytest>=8.0",
 ]
 
+[tool.flet.app]
+# main.py mora em src/app_fi/main.py, não na raiz — flet build precisa de um
+# main.py direto na pasta apontada aqui. Aponta pra src/ (não src/app_fi/) pra
+# preservar app_fi/ como pacote real dentro do bundle, porque main.py usa
+# imports absolutos `from app_fi.xxx import ...` em todo o projeto — se
+# apontasse pra src/app_fi/ direto, o conteúdo virava a raiz do bundle e esses
+# imports quebrariam em runtime. src/main.py é só um launcher fino pro build.
+path = "src"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-app_fi = ["migrations/*.sql", "assets/*"]
+# Assets de imagem não estão aqui: moraram em src/app_fi/assets/, mas agora
+# ficam em src/assets/ (fora do pacote) — ver comentário em [tool.flet.app].
+app_fi = ["migrations/*.sql"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
