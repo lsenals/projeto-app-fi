@@ -1,7 +1,8 @@
 # CLAUDE.md — Finapple
 
-O produto se chama **Finapple** (nome + identidade visual definidos em 2026-09-15,
-detalhes em Obsidian > 06-Projects > Finapple — Identidade Visual). O repositório,
+O produto se chama **Finapple** (a minúsculo; nome definido em 2026-09-15, identidade visual
+renovada em 2026-10-07 — grafite e dourado discreto; detalhes em `DESIGN.md` e em Obsidian >
+06-Projects > Finapple — Identidade Visual). O repositório,
 pacote Python (`app_fi`) e pasta de dados do usuário (`%LOCALAPPDATA%\app-fi`)
 continuam com o nome técnico antigo — renomear isso é uma decisão à parte, ainda
 não tomada, porque implicaria migrar dados de quem já usa o app.
@@ -22,14 +23,21 @@ qualidade de código e organização importam, mesmo sem pressão de prazo real.
 
 ```
 projeto-app-fi/
+├── src/main.py       → launcher fino para o `flet build` (ver seção Mobile)
+├── src/assets/       → logo SVG, fontes (Sora, Manrope — OFL) e imagens
 ├── src/app_fi/
-│   ├── main.py       → ponto de entrada (ft.app)
-│   ├── ui/           → telas e componentes visuais (Flet controls)
-│   ├── core/         → lógica de domínio (cálculos financeiros, regras)
-│   └── data/         → persistência (arquivos locais, banco embutido, etc.)
+│   ├── main.py       → ponto de entrada; navegação e as telas de Finanças, Objetivos e Config
+│   ├── ui/           → telas em módulos próprios: home.py (hub + Investimentos), cripto.py,
+│   │                   cores.py (paleta e fontes)
+│   ├── core/         → lógica de domínio pura (dinheiro, resumo, objetivos, painel, cripto…)
+│   ├── data/         → persistência (repositórios SQLite, backup, importação)
+│   ├── migrations/   → SQL numerado (001…007)
+│   └── report/       → relatório HTML e CSV
 ├── tests/            → testes (pytest)
+├── DESIGN.md, PRODUCT.md, CHANGELOG.md → design, produto e histórico (mantê-los em dia)
+├── Finapple.bat      → atalho para rodar o app no Windows
 ├── .vscode/          → settings.json + launch.json versionados
-├── pyproject.toml    → metadados do pacote + dependências diretas + config do pytest
+├── pyproject.toml    → metadados do pacote + dependências + config do pytest e do `flet build`
 └── requirements.txt  → só a dep direta (flet); pyproject.toml é a fonte de verdade
 ```
 
@@ -50,6 +58,10 @@ python src/app_fi/main.py
 
 # rodar testes
 pytest
+
+# gerar o APK (terminal novo; ver seção Mobile para o ambiente)
+$env:PYTHONIOENCODING='utf-8'; $env:PYTHONUTF8='1'
+flet build apk --org com.finapple --product Finapple --project finapple --arch arm64-v8a
 
 # adicionar uma dependência nova: editar `dependencies` no pyproject.toml,
 # refletir no requirements.txt e reinstalar
@@ -73,7 +85,7 @@ pip install -e ".[dev]"
   ativo só pode ser trocada antes da 1ª operação. O catálogo de ativos está duplicado de propósito em
   `006_crypto.sql` e `CATALOGO_PRINCIPAIS` — um teste garante que não divirjam.
 - Telas novas vão em `src/app_fi/ui/` (uma função `criar_tela_x(...)` que devolve `montar()`), com a
-  paleta em `ui/cores.py`; `main.py` só liga a aba/rota.
+  paleta em `ui/cores.py`; `main.py` só liga as telas (callbacks de navegação).
 - Sem dependências novas sem necessidade clara — cada pacote a mais é peso extra para
   empacotar no mobile depois. Declarar em `pyproject.toml` (`dependencies`), não só instalar.
 - Commits pequenos e descritivos; não commitar `.venv/`, `__pycache__/`, builds, nem
@@ -99,8 +111,11 @@ o app não acessa a internet). O nome do produto é grafado **"Finapple"** (a mi
 *Investimentos* (Cripto ativo; Renda Fixa e Ações "Em breve") e *Objetivos*. **Não há barra inferior**:
 cada módulo tem seta de volta; o menu lateral (Categorias, Recorrentes, Configurações) mora na Home.
 "Finanças pessoais" é a antiga Home (`montar_home` em `main.py`); Lançar abre pelo botão + dela.
-Decisões e histórico em Obsidian > 06-Projects > `Finapple — Nova Home (design)`. O `DESIGN.md` e o
-`PRODUCT.md` ainda descrevem a paleta neon antiga e a barra inferior.
+O botão **+** é dourado, exceto no módulo de finanças (Finanças pessoais, Categorias, Recorrentes),
+onde é o **verde claro** `cores.VERDE_CLARO` (mesmo brilho do dourado). O hub é centralizado na tela e
+o cartão ocupa 80% da largura (proporção, não largura fixa — `page.width` não é confiável no 1º desenho).
+Decisões e histórico em Obsidian > 06-Projects > `Finapple — Nova Home (design)`. `DESIGN.md` e
+`PRODUCT.md` foram atualizados em 2026-10-07 para esta identidade (a versão neon antiga está no git).
 
 ## O que evitar
 
@@ -135,6 +150,12 @@ irrelevante, é só pra app Windows nativo):
 
 Pra rodar `flet build apk`, abrir um terminal **novo** (as variáveis são de usuário, uma
 sessão já aberta antes da instalação não as tem).
+
+**Estado do APK (2026-10-07):** o build foi revalidado depois de reinstalar o ambiente e de endurecer o
+app (sem permissão de internet, sem backup automático). Ele **ainda não foi aberto num aparelho** e
+**será reconstruído ao final de todas as alterações em andamento** (hub, Cripto, fontes variáveis,
+nome "Finapple" no rótulo). A conferir no aparelho: pesos das fontes variáveis, botão voltar do Android
+(hoje fecha o app) e o app sem a permissão de internet.
 
 **Primeiro `flet build apk` de teste rodado com sucesso em 2026-09-23** (APK em
 `build/apk/finapple.apk`, ~54MB, `--org com.finapple --product Finapple --project finapple

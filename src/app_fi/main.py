@@ -397,7 +397,7 @@ def main(page: ft.Page) -> None:
             lista,
         ]
         page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.ADD, bgcolor=_COR_PRIMARIA, on_click=lambda e: montar_lancamento_rapido(),
+            icon=ft.Icons.ADD, bgcolor=cores.VERDE_CLARO, on_click=lambda e: montar_lancamento_rapido(),
         )
         atualizar()
 
@@ -964,7 +964,7 @@ def main(page: ft.Page) -> None:
         )
         body.controls = [categorias_lista]
         page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.ADD, bgcolor=_COR_PRIMARIA, on_click=lambda e: abrir_dialog_categoria(),
+            icon=ft.Icons.ADD, bgcolor=cores.VERDE_CLARO, on_click=lambda e: abrir_dialog_categoria(),
         )
         atualizar_categorias()
 
@@ -1072,7 +1072,7 @@ def main(page: ft.Page) -> None:
             title=ft.Text("Recorrentes"),
         )
         page.floating_action_button = ft.FloatingActionButton(
-            icon=ft.Icons.ADD, bgcolor=_COR_PRIMARIA, on_click=lambda e: abrir_dialog_recorrencia(),
+            icon=ft.Icons.ADD, bgcolor=cores.VERDE_CLARO, on_click=lambda e: abrir_dialog_recorrencia(),
         )
         body.controls = [recorrentes_lista]
         atualizar_recorrentes()

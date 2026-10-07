@@ -21,7 +21,7 @@ from app_fi.ui import cores
 
 def _icone(icone) -> ft.Control:
     return ft.Container(
-        content=ft.Icon(icone, color=cores.PRIMARIA, size=22), width=44, height=44, border_radius=12,
+        content=ft.Icon(icone, color=cores.PRIMARIA, size=20), width=40, height=40, border_radius=12,
         bgcolor=cores.ICONE_FUNDO, border=ft.Border.all(1, cores.ICONE_BORDA),
         alignment=ft.Alignment.CENTER,
     )
@@ -43,29 +43,32 @@ def _linha(
         content=ft.Row([
             _icone(icone),
             ft.Column([
-                ft.Text(titulo, font_family=cores.FONTE_TITULO, size=17, weight=ft.FontWeight.W_600,
+                ft.Text(titulo, font_family=cores.FONTE_TITULO, size=16, weight=ft.FontWeight.W_600,
                         color=cores.TEXTO),
-                ft.Text(subtitulo, size=13, color=cores.TEXTO_SUAVE),
-            ], spacing=2, expand=True),
+                ft.Text(subtitulo, size=12, color=cores.TEXTO_SUAVE),
+            ], spacing=1, expand=True),
             direita,
-        ], spacing=16, vertical_alignment=ft.CrossAxisAlignment.CENTER),
-        padding=ft.Padding(left=20, right=20, top=16, bottom=16),
+        ], spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER),
+        padding=ft.Padding(left=14, right=14, top=11, bottom=11),
         ink=ao_clicar is not None, on_click=ao_clicar,
         opacity=0.6 if em_breve else 1,
     )
 
 
 def _lista(linhas: list[ft.Control]) -> ft.Control:
-    """Cartão com as linhas separadas por divisórias finas."""
+    """Cartão com as linhas separadas por divisórias finas, estreito e centralizado: ocupa 80% da
+    largura (margens laterais iguais), então as linhas não vão até as bordas da tela. Proporção em
+    vez de largura fixa: não depende do tamanho da tela, que o Flet só informa depois do 1º desenho."""
     itens: list[ft.Control] = []
     for i, linha in enumerate(linhas):
         if i:
             itens.append(ft.Divider(height=1, thickness=1, color=cores.BORDA))
         itens.append(linha)
-    return ft.Container(
+    cartao = ft.Container(
         content=ft.Column(itens, spacing=0), bgcolor=cores.SUPERFICIE, border_radius=18,
-        border=ft.Border.all(1, cores.BORDA), clip_behavior=ft.ClipBehavior.HARD_EDGE,
+        border=ft.Border.all(1, cores.BORDA), clip_behavior=ft.ClipBehavior.HARD_EDGE, expand=8,
     )
+    return ft.Row([ft.Container(expand=1), cartao, ft.Container(expand=1)], spacing=0)
 
 
 def _nome_marca(tamanho: int) -> ft.Control:
@@ -95,12 +98,15 @@ def criar_home(
         page.floating_action_button = None
         nivel = goals_core.calcular_nivel(goals_repo.count_achieved(conn))
         resumo = _resumo_cripto()
+        # espaçadores proporcionais centralizam o bloco na altura da tela (um pouco acima do meio, que
+        # parece mais centrado). O bloco tem ~290 px de altura: cabe em qualquer celular
         body.controls = [ft.Column([
+            ft.Container(expand=4),
             ft.Column([
-                ft.Image(src="logo_finapple.svg", width=72, height=84, fit=ft.BoxFit.CONTAIN),
-                _nome_marca(28),
-                ft.Text("Bem-vindo de volta! Para onde vamos?", size=15, color=cores.TEXTO_SUAVE),
-            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=8),
+                ft.Image(src="logo_finapple.svg", width=64, height=75, fit=ft.BoxFit.CONTAIN),
+                _nome_marca(26),
+                ft.Text("Bem-vindo de volta! Para onde vamos?", size=14, color=cores.TEXTO_SUAVE),
+            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=6),
             _lista([
                 _linha(ft.Icons.CREDIT_CARD_ROUNDED, "Finanças pessoais", "Lançamentos e despesas",
                        lambda e: ir_financas()),
@@ -110,9 +116,10 @@ def criar_home(
                 _linha(ft.Icons.EMOJI_EVENTS_ROUNDED, "Objetivos", "Metas e conquistas",
                        lambda e: ir_objetivos()),
             ]),
-            ft.Text(f"Nível {nivel.nivel} · {nivel.xp_no_nivel}/{nivel.xp_por_nivel} XP", size=13,
+            ft.Text(f"Nível {nivel.nivel} · {nivel.xp_no_nivel}/{nivel.xp_por_nivel} XP", size=12,
                     color=cores.TEXTO_SUAVE),
-        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=28, scroll=ft.ScrollMode.AUTO, expand=True)]
+            ft.Container(expand=5),
+        ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=20, expand=True)]
         page.update()
 
     def montar_investimentos() -> None:

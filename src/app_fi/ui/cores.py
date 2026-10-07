@@ -10,6 +10,7 @@ Brand book completo no vault do Obsidian (06-Projects).
 PRIMARIA = "#C2A15A"      # dourado discreto — destaques, botões, progresso
 SECUNDARIA = "#E3C77E"    # dourado claro — recompensas: PRs, XP, ofensiva, metas atingidas
 TERCIARIA = "#8FB0BF"     # azul-aço — terceiro anel do Painel de Finanças
+VERDE_CLARO = "#5AC27D"   # botão + das finanças: o verde com a mesma saturação e luminosidade do dourado (HSL)
 FUNDO = "#1A2227"         # carbono — fundo do app
 SUPERFICIE = "#222C32"    # carbono, um tom mais claro — cards/superfícies
 BORDA = "#2F3B42"         # divisórias e contornos de cards

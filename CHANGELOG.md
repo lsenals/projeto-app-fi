@@ -26,7 +26,12 @@
   Recorrentes, Configurações) fica na Home. Lançar abre pelo botão + de Finanças pessoais.
 - Nova identidade "grafite e dourado discreto", logo SVG, fontes Sora e Manrope empacotadas
   (`src/assets/fonts`, licença OFL), nome grafado "Finapple" e símbolo ao lado do nome removido.
-- Cartões do painel de finanças redesenhados (escuros, na linguagem da Home).
+- Cartões do painel de finanças redesenhados (escuros, na linguagem da Home), com a mesma altura.
+- Hub mais compacto: cartão com 80% da largura, centralizado na tela, linhas menores e mais juntas.
+- Botão **+** do módulo de finanças (Finanças pessoais, Categorias, Recorrentes) em verde claro
+  (`#5AC27D`, mesma saturação e luminosidade do dourado); nos demais módulos segue dourado.
+- Documentação alinhada: `DESIGN.md`, `PRODUCT.md`, `README.md` e `CLAUDE.md` descrevem a identidade
+  e a navegação atuais.
 - Barra de XP, títulos dos cards, tabela do Fechamento e lista de lançamentos ajustados para telas
   de celular.
 

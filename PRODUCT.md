@@ -17,7 +17,9 @@ nem equipe planejados.
 
 App financeiro pessoal e gamificado. Existe para tornar o controle financeiro diário menos
 enfadonho, usando mecânicas de jogo (Objetivos Inteligentes com "PRs", ofensiva/streak,
-Sistema de Nível) sobre uma base sólida de lançamentos, fechamento mensal e relatórios.
+Sistema de Nível) sobre uma base sólida de lançamentos, fechamento mensal e relatórios. Desde
+2026-10-07 o app é um **hub de módulos**: Finanças pessoais, Investimentos (hoje só Cripto; Renda
+Fixa e Ações planejadas, aparecem como "Em breve") e Objetivos.
 Sucesso é subjetivo — não há métrica de negócio — e é medido por "chegar a um estado pronto
 para lançar" caso algum dia isso fizesse sentido, e pelo aprendizado do processo de construir.
 
@@ -35,7 +37,8 @@ Fluxos reais de uso: lançamento rápido diário de receitas/despesas; fechament
 importação de fatura de cartão C6 (arquivo baixado do banco); lançamentos recorrentes
 configurados uma vez; exportação de relatório em HTML; acompanhamento de Objetivos
 (metas com critério de sucesso, ex.: saldo positivo seguido, redução de categoria, renda
-extra) e do Sistema de Nível/ofensiva na Home. Uso é 100% local — sem sincronização entre
+extra) e do Sistema de Nível (no rodapé da Home) e da ofensiva (em Objetivos); carteira de
+criptoativos lançada à mão, com preço atual informado pelo próprio usuário. Uso é 100% local — sem sincronização entre
 dispositivos, sem backend, sem internet necessária pro app funcionar.
 
 ## Capabilities and Constraints
@@ -45,11 +48,15 @@ dispositivos, sem backend, sem internet necessária pro app funcionar.
 - **Dados:** SQLite local em modo WAL, sem backend externo — decisão consciente pra não
   introduzir complexidade de infra/time num projeto solo.
 - **Dinheiro:** sempre representado em centavos inteiros (evita bugs de casa decimal),
-  formatado via `core/money.py::format_brl`.
+  formatado via `core/money.py::format_brl`. **Exceção: criptoativos** (`core/crypto.py`), que usam
+  `Decimal` exato — preço de cripto pode ser R$ 0,000021 e a quantidade tem até 8 casas — e têm
+  moeda própria por ativo (R$ ou US$), com cotação do dólar informada à mão.
 - **Privacidade:** nenhum dado financeiro real ou número de cartão deve aparecer em código,
   testes, specs ou demos — sempre dados fictícios.
-- **Mobile:** toolchain Android (Flutter 3.47.4 + SDK) já instalada; ainda não existe um
-  build `flet build apk` de teste rodado ponta a ponta — é o próximo passo real do projeto.
+- **Mobile:** toolchain Android (Flutter 3.47.4 + SDK) instalada e `flet build apk` validado
+  ponta a ponta (2026-09-23 e 2026-10-07). O APK é endurecido: **sem permissão de internet**, sem
+  backup automático do Android. Ainda **não testado num aparelho**; será reconstruído ao final de
+  todas as alterações em andamento (hub, Cripto, fontes).
 - **Sem multiusuário/autenticação** — indefinidamente fora de escopo pro momento atual.
 
 ## Brand Commitments
@@ -57,16 +64,18 @@ dispositivos, sem backend, sem internet necessária pro app funcionar.
 Nome do produto: **Finapple** (trocadilho "Pineapple" + Finanças), definido em 2026-09-15.
 O nome técnico do pacote/repositório (`app_fi`/`app-fi`) permanece diferente do nome de
 produto por decisão consciente (renomear migraria dados de usuários já existentes — não é
-prioridade). Mascote: abacaxi ilustrado (cofrinho + moeda de porcentagem é a variante
-principal, usada no cabeçalho da Home; há duas variantes reservas sem uso definido ainda —
-coroa/escudo/cofre e globo/moedas internacionais). Paleta e identidade visual completa já
-documentadas em `CLAUDE.md` e no vault Obsidian ("Finapple — Identidade Visual"); este
-arquivo não duplica esses detalhes visuais.
+prioridade). Grafia: **"Finapple"** (a minúsculo), em todo o projeto. Logo: abacaxi lapidado
+em traço fino com uma fechadura de cofre (`src/assets/logo_finapple.svg`), sem símbolo extra ao
+lado do nome. Identidade: grafite e dourado discreto, fontes Sora (títulos) e Manrope (texto).
+Paleta, tokens e decisões documentados em `DESIGN.md`, `CLAUDE.md` e no vault Obsidian ("Finapple —
+Identidade Visual" e "Finapple — Nova Home (design)"); este arquivo não duplica esses detalhes.
 
 ## Evidence on Hand
 
-- Ilustrações do mascote em `src/app_fi/assets/` (`mascote_poupanca.png` processado e
-  pronto; `mascote_seguranca.png`/`mascote_global.png` ainda com fundo branco não tratado).
+- Logo SVG em `src/assets/logo_finapple.svg` e fontes em `src/assets/fonts/`. Os mascotes PNG
+  antigos (`mascote_*.png`, fase neon de 09/2026) seguem em `src/assets/`, sem uso na interface.
+- Design de referência: canvas "Finapple – Nova Home" no claude.ai (sem link automático com o repo;
+  endereço no `CLAUDE.md`).
 - Nenhum dado financeiro real, depoimento, caso de uso ou métrica de negócio existe ou deve
   ser inventado — é um projeto pessoal sem clientes, sem imprensa, sem benchmarks.
 
