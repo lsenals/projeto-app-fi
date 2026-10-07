@@ -24,6 +24,7 @@ from app_fi.core import trades as core_trades
 from app_fi.data import trades_realizados_repo as trades_repo
 from app_fi.ui import cores
 from app_fi.ui.componentes import APENAS_NUMEROS as _APENAS_NUMEROS
+from app_fi.ui.componentes import centralizado as _centralizado
 from app_fi.ui.componentes import cor as _cor
 from app_fi.ui.componentes import data_br as _data_br
 from app_fi.ui.componentes import data_curta as _data_curta
@@ -266,14 +267,14 @@ def criar_tela_carteira(
         abertos = [a for a in carteira.ativos if a.em_carteira]
         encerrados = [a for a in carteira.ativos if not a.em_carteira]
         if not carteira.ativos:
-            conteudo: list[ft.Control] = [ft.Container(
+            conteudo: list[ft.Control] = [_centralizado(ft.Container(
                 content=ft.Column([
                     ft.Icon(config.icone, size=48, color=cores.SECUNDARIA),
                     ft.Text(config.vazio_titulo, size=16, weight=ft.FontWeight.BOLD),
                     ft.Text(config.vazio_texto, size=12, color=ft.Colors.GREY, text_align=ft.TextAlign.CENTER),
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10),
                 padding=ft.Padding(left=16, right=16, top=48, bottom=16),
-            )]
+            ))]
         else:
             conteudo = [
                 _card_resumo(carteira.resumo, repo.get_usd_rate(conn), any(a.moeda == "USD" for a in carteira.ativos)),

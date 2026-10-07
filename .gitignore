@@ -41,3 +41,6 @@ src/*.egg-info/
 
 # Saída de ferramentas de análise (graphify, etc.) — o repo é só código
 graphify-out/
+
+# Atalho do Windows (caminho absoluto da máquina)
+*.lnk

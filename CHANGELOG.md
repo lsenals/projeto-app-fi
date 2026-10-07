@@ -2,6 +2,20 @@
 
 ## Não lançado (desenvolvimento pós-v1.0.0, a partir de 2026-10-07)
 
+### Interface
+- **Data nos lançamentos:** a tela "Lançar" e o diálogo de novo/editar lançamento ganharam o campo
+  **Data** (padrão: hoje; seletor de calendário, de 2000 até hoje), para registrar gastos e receitas
+  esquecidos ou de dias em que não houve acesso ao app. Na edição também dá para corrigir a data. Na
+  tela "Lançar" a data escolhida permanece entre registros (vários do mesmo dia seguidos).- **Linha do tempo do mês** em Finanças pessoais, logo abaixo do seletor de mês: faixa compacta de
+  consulta com **uma bolinha por dia e por tipo** (despesa acima do eixo, receita abaixo; tamanho
+  proporcional ao total do dia). Dia de hoje em dourado, dia de maior gasto na legenda; tocar num dia
+  abre o detalhe e, nele, a edição de cada lançamento. **Acompanha o mês navegado** (Setembro mostra
+  30 dias e os lançamentos de setembro). Substitui o anel "Mês" do painel, que só mostrava dias
+  decorridos; sobram os anéis Objetivos e Gasto/renda (`core/linha_tempo.py`, `ui/linha_tempo.py`).
+- Textos de "vazio" (carteira de Cripto, Ações e Renda Fixa; lista de lançamentos, categorias,
+  recorrências, objetivos e painel) centralizados na horizontal, mantidos no topo
+  (`componentes.centralizado` / `texto_vazio`).
+
 ### Criptoativos (nova aba "Cripto")
 - Carteira lançada à mão: compras e vendas, preço médio, lucro/prejuízo realizado e não realizado,
   total investido, evolução do valor da carteira e **metas de trade** (ganho % sobre o preço médio,

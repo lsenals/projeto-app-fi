@@ -20,6 +20,7 @@ import flet as ft
 from app_fi.core import goals as goals_core
 from app_fi.core.c6_import import ImportedRow, classify_rows
 from app_fi.core.dates import previous_month
+from app_fi.core.linha_tempo import montar_linha_tempo
 from app_fi.core.money import format_amount_input, format_brl, parse_brl
 from app_fi.core.painel import PainelFinancas, calcular_painel
 from app_fi.core.recurring import forecast as recurring_forecast
@@ -42,8 +43,10 @@ from app_fi.report.csv_report import render_csv
 from app_fi.report.html_report import render_report
 from app_fi.ui import cores
 from app_fi.ui.acoes import criar_tela_acoes
+from app_fi.ui.componentes import botao_data, texto_vazio
 from app_fi.ui.cripto import criar_tela_cripto
 from app_fi.ui.home import criar_home
+from app_fi.ui.linha_tempo import card_linha_tempo
 from app_fi.ui.navegacao import pai_de
 from app_fi.ui.renda_fixa import criar_tela_renda_fixa
 
@@ -55,7 +58,6 @@ _MESES = [
 # Identidade visual Finapple (paleta em app_fi/ui/cores.py, compartilhada com as telas em ui/)
 _COR_PRIMARIA = cores.PRIMARIA
 _COR_SECUNDARIA = cores.SECUNDARIA
-_COR_TERCIARIA = cores.TERCIARIA
 _COR_FUNDO = cores.FUNDO
 _COR_SUPERFICIE = cores.SUPERFICIE
 
@@ -154,12 +156,12 @@ def _card_saldo_meta(titulo: str, valor_cents: int, ratio: float, icone, cor: st
     )
 
 
-_CORES_ANEIS = (_COR_PRIMARIA, _COR_SECUNDARIA, _COR_TERCIARIA)
+_CORES_ANEIS = (_COR_PRIMARIA, _COR_SECUNDARIA)
 
 
 def painel_financas(painel: PainelFinancas) -> ft.Control:
-    """Painel de Finanças — 3 anéis de progresso + 2 cards (saldo dos últimos
-    7 dias e poupança do mês), alimentados por `core.painel.calcular_painel`."""
+    """Painel de Finanças — 2 anéis de progresso e 2 cards (saldo dos últimos 7 dias e poupança do
+    mês), alimentados por `core.painel.calcular_painel`."""
     return ft.Column(
         [
             ft.Row(
@@ -304,6 +306,7 @@ def main(page: ft.Page) -> None:
     # padding embaixo: deixa a última linha rolar pra cima do botão flutuante "+"
     lista = ft.ListView(expand=True, spacing=2, padding=ft.Padding(left=0, right=0, top=0, bottom=88))
     painel_host = ft.Container()  # conteúdo recalculado em atualizar()
+    linha_host = ft.Container()   # linha do tempo do mês exibido, recalculada em atualizar()
 
     def cabecalho_lista() -> ft.Control:
         return ft.Container(
@@ -344,13 +347,14 @@ def main(page: ft.Page) -> None:
         t = month_totals(rows)
         mes_titulo.value = f"{_MESES[mes].capitalize()} {ano}"
         painel_host.content = painel_financas(_dados_painel())
+        linha_host.content = card_linha_tempo(montar_linha_tempo(rows, ano, mes, hoje), abrir_dia)
         saldo.value = f"Saldo do mês: {format_brl(t.balance_cents)}"
         resumo.value = (
             f"Entradas {format_brl(t.income_cents)}   ·   "
             f"Saídas {format_brl(t.expense_cents)}"
         )
         lista.controls = [linha(r) for r in rows] or [
-            ft.Text("Nenhum lançamento neste mês.", italic=True, color=ft.Colors.GREY)
+            texto_vazio("Nenhum lançamento neste mês.")
         ]
         page.update()
 
@@ -400,6 +404,7 @@ def main(page: ft.Page) -> None:
                     on_click=lambda e: mudar_mes(1),
                 ),
             ], spacing=0),
+            linha_host,
             saldo,
             resumo,
             ft.Divider(),
@@ -411,6 +416,47 @@ def main(page: ft.Page) -> None:
         )
         atualizar()
 
+    def abrir_dia(dia: int) -> None:
+        """Detalhe de um dia da linha do tempo: os lançamentos dele; tocar num deles abre a edição."""
+        ano, mes = mes_visualizado["ano"], mes_visualizado["mes"]
+        linha_tempo = montar_linha_tempo(repo.list_month(conn, ano, mes), ano, mes, hoje)
+        eventos = linha_tempo.eventos_do_dia(dia)
+
+        def editar(tx_id: int | None) -> None:
+            page.pop_dialog()
+            if tx_id is not None:
+                abrir_dialog_lancamento(tx_id=tx_id)
+
+        def item(e) -> ft.Control:
+            receita = e.tipo == "income"
+            return ft.Container(
+                content=ft.Row([
+                    ft.Column([
+                        ft.Text(e.descricao, max_lines=2, overflow=ft.TextOverflow.ELLIPSIS),
+                        ft.Text("Recorrente", size=11, color=ft.Colors.GREY) if e.recorrente else ft.Container(),
+                    ], spacing=0, expand=True),
+                    ft.Text(f"{'+' if receita else '−'} {format_brl(e.valor_cents)}",
+                            color=ft.Colors.GREEN if receita else ft.Colors.RED),
+                ], spacing=12),
+                ink=True, border_radius=6, padding=ft.Padding(left=4, right=4, top=6, bottom=6),
+                on_click=lambda ev, tx_id=e.id: editar(tx_id),
+            )
+
+        gasto = sum(e.valor_cents for e in eventos if e.tipo == "expense")
+        entrada = sum(e.valor_cents for e in eventos if e.tipo == "income")
+        page.show_dialog(ft.AlertDialog(
+            title=ft.Text(f"{dia:02d}/{linha_tempo.mes:02d}/{linha_tempo.ano}"),
+            content=ft.Column(
+                [
+                    ft.Text(f"Entradas {format_brl(entrada)}   ·   Saídas {format_brl(gasto)}",
+                            size=12, color=ft.Colors.GREY),
+                    *[item(e) for e in eventos],
+                ],
+                scroll=ft.ScrollMode.AUTO, spacing=4, width=320, height=min(48 + 46 * len(eventos), 420),
+            ),
+            actions=[ft.TextButton("Fechar", on_click=lambda e: page.pop_dialog())],
+        ))
+
     def abrir_dialog_lancamento(tx_id: int | None = None) -> None:
         existente = repo.get(conn, tx_id) if tx_id is not None else None
         kind = existente["kind"] if existente else "expense"
@@ -418,8 +464,12 @@ def main(page: ft.Page) -> None:
             "expense": existente["category_id"] if existente and kind == "expense" else None,
             "income": existente["income_source_id"] if existente and kind == "income" else None,
         }
-        # o tipo não muda na edição; ao criar, é sempre para hoje
-        data_lancamento = existente["date"] if existente else hoje.isoformat()
+        # o tipo não muda na edição; a data começa em hoje (ou na do lançamento) e pode ser trocada
+        data_lancamento = {"iso": existente["date"] if existente else hoje.isoformat()}
+        data_botao = botao_data(
+            page, data_lancamento, "iso", "Data", primeira=dt.date(2000, 1, 1),
+            ultima=max(hoje, dt.date.fromisoformat(data_lancamento["iso"])),  # edição de lançamento futuro
+        )
 
         valor = ft.TextField(
             label="Valor (R$)",
@@ -507,12 +557,12 @@ def main(page: ft.Page) -> None:
                 antes = repo.snapshot(existente)
                 if kind == "expense":
                     repo.update_expense(
-                        conn, existente["id"], date=data_lancamento, amount_cents=cents,
+                        conn, existente["id"], date=data_lancamento["iso"], amount_cents=cents,
                         category_id=escolhido["expense"], payee_id=payee_id,
                     )
                 else:
                     repo.update_income(
-                        conn, existente["id"], date=data_lancamento, amount_cents=cents,
+                        conn, existente["id"], date=data_lancamento["iso"], amount_cents=cents,
                         income_source_id=escolhido["income"], payee_id=payee_id,
                     )
                 atualizar()
@@ -522,12 +572,12 @@ def main(page: ft.Page) -> None:
 
             if kind == "expense":
                 novo_id = repo.add_expense(
-                    conn, date=data_lancamento, amount_cents=cents,
+                    conn, date=data_lancamento["iso"], amount_cents=cents,
                     category_id=escolhido["expense"], payee_id=payee_id,
                 )
             else:
                 novo_id = repo.add_income(
-                    conn, date=data_lancamento, amount_cents=cents,
+                    conn, date=data_lancamento["iso"], amount_cents=cents,
                     income_source_id=escolhido["income"], payee_id=payee_id,
                 )
 
@@ -587,7 +637,7 @@ def main(page: ft.Page) -> None:
             modal=True,
             title=ft.Text("Editar lançamento" if existente else "Novo lançamento"),
             content=ft.Column(
-                [tipo, valor, estabelecimento, chips_label, chips, erro], tight=True, width=360, spacing=10,
+                [tipo, valor, data_botao, estabelecimento, chips_label, chips, erro], tight=True, width=360, spacing=10,
             ),
             on_dismiss=lambda e: setattr(page, "on_keyboard_event", None),
             actions_alignment=(
@@ -873,10 +923,10 @@ def main(page: ft.Page) -> None:
         ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
 
         linhas_despesa = [_barra(nome, c, max_despesa, ft.Colors.RED) for nome, c in despesas] or [
-            ft.Text("Nenhuma despesa neste mês.", italic=True, color=ft.Colors.GREY)
+            texto_vazio("Nenhuma despesa neste mês.")
         ]
         linhas_receita = [_barra(nome, c, max_receita, ft.Colors.GREEN) for nome, c in receitas] or [
-            ft.Text("Nenhuma receita neste mês.", italic=True, color=ft.Colors.GREY)
+            texto_vazio("Nenhuma receita neste mês.")
         ]
 
         if comparacao:
@@ -963,7 +1013,7 @@ def main(page: ft.Page) -> None:
     def atualizar_categorias() -> None:
         itens = categories_repo.list_active(conn)
         categorias_lista.controls = [linha_categoria(c) for c in itens] or [
-            ft.Text("Nenhuma categoria cadastrada.", italic=True, color=ft.Colors.GREY)
+            texto_vazio("Nenhuma categoria cadastrada.")
         ]
         page.update()
 
@@ -1072,7 +1122,7 @@ def main(page: ft.Page) -> None:
     def atualizar_recorrentes() -> None:
         itens = recurring_repo.list_active(conn)
         recorrentes_lista.controls = [linha_recorrencia(r) for r in itens] or [
-            ft.Text("Nenhuma recorrência cadastrada.", italic=True, color=ft.Colors.GREY)
+            texto_vazio("Nenhuma recorrência cadastrada.")
         ]
         page.update()
 
@@ -1347,6 +1397,10 @@ def main(page: ft.Page) -> None:
 
         kind = {"valor": "expense"}
         escolhido = {"valor": None}
+        data_lancamento = {"iso": hoje.isoformat()}  # fica entre registros: dá para lançar vários do mesmo dia
+        data_botao = botao_data(
+            page, data_lancamento, "iso", "Data", primeira=dt.date(2000, 1, 1), ultima=hoje,
+        )
 
         valor = ft.TextField(
             value="", autofocus=True, text_align=ft.TextAlign.CENTER,
@@ -1471,12 +1525,12 @@ def main(page: ft.Page) -> None:
                 if payee_id is not None and escolhido["valor"] is not None:
                     payees_repo.set_default_category(conn, payee_id, escolhido["valor"])
                 repo.add_expense(
-                    conn, date=hoje.isoformat(), amount_cents=cents,
+                    conn, date=data_lancamento["iso"], amount_cents=cents,
                     category_id=escolhido["valor"], payee_id=payee_id,
                 )
             else:
                 repo.add_income(
-                    conn, date=hoje.isoformat(), amount_cents=cents,
+                    conn, date=data_lancamento["iso"], amount_cents=cents,
                     income_source_id=escolhido["valor"], payee_id=payee_id,
                 )
 
@@ -1501,6 +1555,7 @@ def main(page: ft.Page) -> None:
         body.controls = [
             ft.Text("Novo lançamento", size=20, weight=ft.FontWeight.BOLD),
             tipo,
+            data_botao,
             ft.Container(
                 content=valor, padding=16, border_radius=20, bgcolor=_COR_SUPERFICIE,
                 alignment=ft.Alignment.CENTER,
@@ -1664,9 +1719,7 @@ def main(page: ft.Page) -> None:
         if progresso:
             secoes.append(ft.Column([card_missao(g, p) for g, p in progresso], spacing=10))
         else:
-            secoes.append(ft.Text(
-                "Nenhum objetivo ativo. Toque em + para criar um.", italic=True, color=ft.Colors.GREY,
-            ))
+            secoes.append(texto_vazio("Nenhum objetivo ativo. Toque em + para criar um."))
 
         body.controls = [ft.Column(secoes, spacing=10, scroll=ft.ScrollMode.AUTO, expand=True)]
         page.update()

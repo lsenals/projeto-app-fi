@@ -29,8 +29,8 @@ projeto-app-fi/
 │   ├── main.py       → ponto de entrada; navegação e as telas de Finanças, Objetivos e Config
 │   ├── ui/           → telas em módulos próprios: home.py (hub + Investimentos), carteira.py (Cripto
 │   │                   e Ações), cripto.py, acoes.py, renda_fixa.py, componentes.py, navegacao.py,
-│   │                   cores.py (paleta e fontes)
-│   ├── core/         → lógica de domínio pura (dinheiro, resumo, objetivos, painel, cripto, trades, renda fixa…)
+│   │                   cores.py (paleta e fontes), linha_tempo.py
+│   ├── core/         → lógica de domínio pura (dinheiro, resumo, objetivos, painel, linha do tempo, cripto, trades, renda fixa…)
 │   ├── data/         → persistência (repositórios SQLite, backup, importação)
 │   ├── migrations/   → SQL numerado (001…009)
 │   └── report/       → relatório HTML e CSV
@@ -124,7 +124,9 @@ ao + a cor da regra acima.
 "Finanças pessoais" é a antiga Home (`montar_home` em `main.py`); Lançar abre pelo botão + dela.
 **Regra do botão +:** **todo** FAB de criar (Finanças pessoais, Categorias, Recorrentes, Cripto, Ações, Renda
 Fixa, Objetivos e módulos futuros) é o **verde claro** `cores.VERDE_CLARO` (mesmo brilho do dourado). **Subtítulos das linhas do hub e de Investimentos são descrições,
-nunca números** (valores ficam dentro do módulo). O hub é centralizado na tela e
+nunca números** (valores ficam dentro do módulo). **Estados vazios** ("Nenhum…", "Sua carteira está
+vazia") ficam centralizados na horizontal e no topo: usar `componentes.centralizado`/`texto_vazio`
+(sem isso a coluna encolhe e cola à esquerda). O hub é centralizado na tela e
 o cartão ocupa 80% da largura (proporção, não largura fixa — `page.width` não é confiável no 1º desenho).
 Decisões e histórico em Obsidian > 06-Projects > `Finapple — Nova Home (design)`. `DESIGN.md` e
 `PRODUCT.md` foram atualizados em 2026-10-07 para esta identidade (a versão neon antiga está no git).

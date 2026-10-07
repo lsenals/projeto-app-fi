@@ -6,7 +6,6 @@ filosofia do resto do app: nada de contador guardado à parte).
 
 from __future__ import annotations
 
-import calendar
 import datetime as dt
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
@@ -22,7 +21,7 @@ class Anel:
 
 @dataclass(frozen=True)
 class PainelFinancas:
-    aneis: tuple[Anel, Anel, Anel]
+    aneis: tuple[Anel, Anel]
     saldo_semana_cents: int
     saldo_semana_ratio: float  # 0..1 — fatia da renda dos últimos 7 dias que sobrou
     poupanca_mes_cents: int
@@ -61,7 +60,6 @@ def calcular_painel(
     (basta passar o mês atual e o anterior)."""
     rows = list(rows)
     primeiro_dia = hoje.replace(day=1)
-    dias_no_mes = calendar.monthrange(hoje.year, hoje.month)[1]
 
     entradas_mes, saidas_mes = _somar(rows, primeiro_dia, hoje)
     entradas_sem, saidas_sem = _somar(rows, hoje - dt.timedelta(days=DIAS_SEMANA - 1), hoje)
@@ -72,7 +70,6 @@ def calcular_painel(
         aneis=(
             Anel("Objetivos", round(_ratio(objetivos_batidos, objetivos_total) * 100)),
             Anel("Gasto/renda", round(_ratio(saidas_mes, entradas_mes) * 100)),
-            Anel("Mês", round(hoje.day / dias_no_mes * 100)),
         ),
         saldo_semana_cents=saldo_sem,
         saldo_semana_ratio=_ratio(saldo_sem, entradas_sem),

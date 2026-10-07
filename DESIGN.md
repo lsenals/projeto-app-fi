@@ -122,7 +122,7 @@ acentos de papel único (azul-aço e verde-claro) e as cores semânticas do dinh
   É o mesmo dourado, um tom acima, para ainda distinguir "conquistei" de "posso agir".
 
 ### Tertiary
-- **Azul-aço** (#8FB0BF): leitura neutra — hoje só o terceiro anel do Painel de Finanças.
+- **Azul-aço** (#8FB0BF): leitura neutra — reservado (o terceiro anel "Mês" do Painel de Finanças foi substituído pela linha do tempo).
 
 ### Accent (um único uso)
 - **Verde claro** (#5AC27D): exclusivo do botão **+** (criar) de **todos os módulos** — Finanças pessoais
@@ -257,7 +257,7 @@ missão, de ativo, do hub) em vez de "utilidade" (linha de lista, barra), mais g
 
 ### Progress Ring com % central (componente assinatura)
 `ft.ProgressRing` não tem texto central no Flet: empilha-se um `ft.Text` por cima com `ft.Stack`
-— 3 anéis do Painel de Finanças (dourado, dourado claro, azul-aço), cada um com rótulo embaixo.
+— 2 anéis do Painel de Finanças (dourado e dourado claro), cada um com rótulo embaixo; abaixo do seletor de mês, a linha do tempo compacta (bolinhas vermelhas de despesa acima do eixo, verdes de receita abaixo, dia de hoje em dourado).
 Qualquer nova leitura circular de progresso deve reusar esse padrão.
 
 ## Do's and Don'ts

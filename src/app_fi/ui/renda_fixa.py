@@ -18,7 +18,7 @@ from app_fi.core import renda_fixa as core
 from app_fi.core.crypto import formatar_pct, formatar_valor, parse_decimal
 from app_fi.data import renda_fixa_repo as repo
 from app_fi.ui import cores
-from app_fi.ui.componentes import APENAS_NUMEROS, botao_data, cor, data_br, rotulo_valor, texto_exato
+from app_fi.ui.componentes import APENAS_NUMEROS, botao_data, centralizado, cor, data_br, rotulo_valor, texto_exato
 
 _ROTULO_TAXA = {
     "PRE": "Taxa pré-fixada (% ao ano)",
@@ -180,7 +180,7 @@ def criar_tela_renda_fixa(
         ativas = [p for p in carteira.posicoes if not p.encerrada]
         encerradas = [p for p in carteira.posicoes if p.encerrada]
         if not carteira.posicoes:
-            conteudo: list[ft.Control] = [ft.Container(
+            conteudo: list[ft.Control] = [centralizado(ft.Container(
                 content=ft.Column([
                     ft.Icon(ft.Icons.ACCOUNT_BALANCE_ROUNDED, size=48, color=cores.SECUNDARIA),
                     ft.Text("Nenhuma aplicação de renda fixa", size=16, weight=ft.FontWeight.BOLD),
@@ -191,7 +191,7 @@ def criar_tela_renda_fixa(
                     ),
                 ], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=10),
                 padding=ft.Padding(left=16, right=16, top=48, bottom=16),
-            )]
+            ))]
         else:
             conteudo = [_card_resumo(carteira.resumo)]
             if ativas:

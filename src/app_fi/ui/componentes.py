@@ -11,6 +11,17 @@ import flet as ft
 APENAS_NUMEROS = ft.InputFilter(regex_string=r"^[0-9.,]*$", allow=True)
 
 
+def centralizado(conteudo: ft.Control) -> ft.Control:
+    """Centraliza na horizontal (largura toda da tela) um bloco "vazio", mantendo-o no topo. Sem isto a
+    coluna encolhe ao conteúdo e fica colada à esquerda."""
+    return ft.Row([ft.Container(content=conteudo, expand=True, alignment=ft.Alignment.TOP_CENTER)])
+
+
+def texto_vazio(texto: str) -> ft.Control:
+    """Mensagem de lista vazia ("Nenhum lançamento…"), em itálico e centralizada."""
+    return centralizado(ft.Text(texto, italic=True, color=ft.Colors.GREY, text_align=ft.TextAlign.CENTER))
+
+
 def data_br(iso: str) -> str:
     return f"{iso[8:10]}/{iso[5:7]}/{iso[0:4]}"
 

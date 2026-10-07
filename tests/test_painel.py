@@ -11,15 +11,13 @@ def _tx(date, kind, cents, status="confirmed"):
 
 def test_sem_lancamentos_tudo_zerado():
     p = calcular_painel([], HOJE, objetivos_batidos=0, objetivos_total=0)
-    assert [a.percentual for a in p.aneis[:2]] == [0, 0]
+    assert [a.percentual for a in p.aneis] == [0, 0]
     assert p.saldo_semana_cents == 0 and p.saldo_semana_ratio == 0.0
     assert p.poupanca_mes_cents == 0 and p.poupanca_mes_ratio == 0.0
 
 
-def test_anel_do_mes_e_o_dia_sobre_dias_do_mes():
-    p = calcular_painel([], dt.date(2026, 10, 31), 0, 0)
-    assert p.aneis[2].percentual == 100
-    assert calcular_painel([], dt.date(2026, 2, 14), 0, 0).aneis[2].percentual == 50  # 14/28
+def test_painel_tem_so_dois_aneis():
+    assert [a.rotulo for a in calcular_painel([], HOJE, 0, 0).aneis] == ["Objetivos", "Gasto/renda"]
 
 
 def test_anel_de_objetivos():
