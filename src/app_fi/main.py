@@ -1553,9 +1553,8 @@ def main(page: ft.Page) -> None:
 
         montar_grid()
         body.controls = [
-            ft.Text("Novo lançamento", size=20, weight=ft.FontWeight.BOLD),
-            tipo,
-            data_botao,
+            ft.Row([tipo], alignment=ft.MainAxisAlignment.CENTER),
+            ft.Row([data_botao], alignment=ft.MainAxisAlignment.CENTER),
             ft.Container(
                 content=valor, padding=16, border_radius=20, bgcolor=_COR_SUPERFICIE,
                 alignment=ft.Alignment.CENTER,

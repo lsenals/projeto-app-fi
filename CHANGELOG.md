@@ -6,7 +6,9 @@
 - **Data nos lançamentos:** a tela "Lançar" e o diálogo de novo/editar lançamento ganharam o campo
   **Data** (padrão: hoje; seletor de calendário, de 2000 até hoje), para registrar gastos e receitas
   esquecidos ou de dias em que não houve acesso ao app. Na edição também dá para corrigir a data. Na
-  tela "Lançar" a data escolhida permanece entre registros (vários do mesmo dia seguidos).- **Linha do tempo do mês** em Finanças pessoais, logo abaixo do seletor de mês: faixa compacta de
+  tela "Lançar" a data escolhida permanece entre registros (vários do mesmo dia seguidos).
+  Na tela "Lançar" sumiu o título "Novo lançamento" e o seletor Despesa/Receita e a data ficam centralizados
+  logo acima do valor, tudo no mesmo campo de visão.- **Linha do tempo do mês** em Finanças pessoais, logo abaixo do seletor de mês: faixa compacta de
   consulta com **uma bolinha por dia e por tipo** (despesa acima do eixo, receita abaixo; tamanho
   proporcional ao total do dia). Dia de hoje em dourado, dia de maior gasto na legenda; tocar num dia
   abre o detalhe e, nele, a edição de cada lançamento. **Acompanha o mês navegado** (Setembro mostra
