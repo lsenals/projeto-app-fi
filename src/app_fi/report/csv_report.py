@@ -12,6 +12,12 @@ from app_fi.core.money import format_brl
 _HEADER = ["Data", "Tipo", "Categoria/Origem", "Valor (R$)", "Status"]
 
 
+def _safe_cell(text: str) -> str:
+    # Excel/Sheets interpretam células iniciadas por = + - @ como fórmula; o apóstrofo
+    # força texto puro.
+    return "'" + text if text[:1] in ("=", "+", "-", "@", "\t", "\r") else text
+
+
 def render_csv(rows: Iterable[Mapping]) -> str:
     buf = io.StringIO()
     writer = csv.writer(buf, delimiter=";")
@@ -24,7 +30,7 @@ def render_csv(rows: Iterable[Mapping]) -> str:
         writer.writerow([
             r["date"],
             "Receita" if receita else "Despesa",
-            nome,
+            _safe_cell(nome),
             format_brl(r["amount_cents"]),
             "Confirmado" if r["status"] == "confirmed" else "A confirmar",
         ])

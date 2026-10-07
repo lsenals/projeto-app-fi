@@ -31,6 +31,18 @@ dev = [
 # imports quebrariam em runtime. src/main.py é só um launcher fino pro build.
 path = "src"
 
+[tool.flet.android.permission]
+# O app é 100% local e o Flet em produção usa uma ponte em-processo (sem TCP/UDS),
+# então a permissão INTERNET que ele adiciona por padrão não é necessária. Sem ela o
+# Android bloqueia qualquer acesso à rede a partir do app.
+"android.permission.INTERNET" = false
+
+[tool.flet.android.manifest_application]
+# Dados financeiros ficam só no aparelho: sem Auto Backup para a conta Google nem
+# extração por `adb backup` / transferência de dispositivo.
+allowBackup = "false"
+fullBackupContent = "false"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

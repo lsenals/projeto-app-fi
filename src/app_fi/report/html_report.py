@@ -8,6 +8,8 @@ números já calculados, devolve uma string; quem escreve o arquivo é
 
 from __future__ import annotations
 
+from html import escape
+
 from app_fi.core.money import format_brl
 from app_fi.core.summary import ComparisonRow
 
@@ -27,7 +29,7 @@ def _bars_svg(items: list[tuple[str, int]], color: str) -> str:
         x = left + i * (bar_w + gap)
         h = round(plot_h * value / max_v) if max_v else 0
         y = top + (plot_h - h)
-        label = name if len(name) <= 12 else name[:11] + "…"
+        label = escape(name if len(name) <= 12 else name[:11] + "…")
         parts.append(
             f'<rect x="{x}" y="{y}" width="{bar_w}" height="{max(h, 1)}" fill="{color}" rx="2"/>'
             f'<text x="{x + bar_w / 2}" y="{y - 8}" text-anchor="middle" class="val">'
@@ -52,7 +54,7 @@ def _comparison_table(rows: list[ComparisonRow], mes_atual: str, mes_anterior: s
             variacao = f"{r.delta_pct:+.0f}%"
             cls = "alta" if r.delta_pct > 0 else ("queda" if r.delta_pct < 0 else "neutro")
         trs.append(
-            f"<tr><td>{r.category}</td><td>{format_brl(r.current_cents)}</td>"
+            f"<tr><td>{escape(r.category)}</td><td>{format_brl(r.current_cents)}</td>"
             f"<td>{format_brl(r.previous_cents)}</td><td class='{cls}'>{variacao}</td></tr>"
         )
     return (

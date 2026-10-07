@@ -40,3 +40,8 @@ def test_csv_row_count_matches_input():
     rows = [_row("expense", 100 * i, category_name="Outros") for i in range(1, 6)]
     csv_text = render_csv(rows)
     assert len(csv_text.strip().splitlines()) == 1 + 5  # header + 5 linhas
+
+
+def test_csv_neutralizes_formula_injection_in_category_name():
+    csv_text = render_csv([_row("expense", 1000, category_name="=1+1")])
+    assert ";'=1+1;" in csv_text.splitlines()[1]

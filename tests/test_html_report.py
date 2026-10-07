@@ -52,3 +52,19 @@ def test_report_marks_increase_and_decrease_distinctly():
     html = _render(comparacao=comparacao)
     assert "class='alta'" in html
     assert "class='queda'" in html
+
+
+def test_report_escapes_category_names_in_table_and_chart():
+    malicioso = "<script>alert(1)</script>"
+    html = _render(
+        despesas=[(malicioso, 1000)],
+        comparacao=[ComparisonRow(malicioso, 1000, 500)],
+    )
+    assert "<script" not in html.lower()
+    assert "&lt;script&gt;" in html  # tabela de comparação
+    assert "&lt;script&gt;" in html.split("<svg", 1)[1]  # rótulo do gráfico
+
+
+def test_report_escapes_ampersand_in_category_name():
+    html = _render(comparacao=[ComparisonRow("Bares & Restaurantes", 1000, 500)])
+    assert "Bares &amp; Restaurantes" in html
