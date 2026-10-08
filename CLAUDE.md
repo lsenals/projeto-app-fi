@@ -37,6 +37,7 @@ projeto-app-fi/
 ├── tests/            → testes (pytest)
 ├── DESIGN.md, PRODUCT.md, CHANGELOG.md → design, produto e histórico (mantê-los em dia)
 ├── Finapple.bat      → atalho para rodar o app no Windows
+├── Finapple.ico      → ícone do app no Windows (usado pelo atalho Finapple.lnk, que não é versionado)
 ├── .vscode/          → settings.json + launch.json versionados
 ├── pyproject.toml    → metadados do pacote + dependências + config do pytest e do `flet build`
 └── requirements.txt  → só a dep direta (flet); pyproject.toml é a fonte de verdade

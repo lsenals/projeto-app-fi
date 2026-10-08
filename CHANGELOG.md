@@ -2,6 +2,9 @@
 
 ## Não lançado (desenvolvimento pós-v1.0.0, a partir de 2026-10-07)
 
+### Windows
+- Atalho `Finapple.lnk` (não versionado) com o ícone do app: `Finapple.ico` na raiz (7 tamanhos, de 16 a 256 px, gerados do `icon.png`). A janela e a barra de tarefas ainda mostram o ícone padrão do Flet.
+
 ### Android
 - **Ícone do app** com o logo (`src/assets/icon.png`, 1024x1024, traço mais grosso para ler bem pequeno): o `flet build` gera os ícones do Android a partir dele. Fundo do ícone adaptativo e da tela de abertura em grafite `#1A2227` (`[tool.flet.android]` e `[tool.flet.splash]` no `pyproject.toml`; o padrão é branco, que deixaria uma borda branca em volta do logo e um clarão ao abrir).
 - **Botão voltar em Investimentos:** fechava o app porque `ui/home.py` chamava as próprias `montar_hub`/`montar_investimentos` (não registradas), e a "tela atual" do voltar ficava no hub. Agora a navegação passa por `ir_hub`/`ir_investimentos` (os nomes registrados em `main.py`); um teste impede a regressão. Conferido no aparelho: Investimentos volta ao hub e o hub fecha o app.
