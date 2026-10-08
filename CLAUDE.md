@@ -168,7 +168,7 @@ sessão já aberta antes da instalação não as tem).
 **Estado do APK (2026-10-07, 20h28):** reconstruído com tudo (hub, Investimentos, linha do tempo, campo de
 data, logo novo, fontes variáveis) — `build/apk/finapple.apk`, ~54,5 MB, `com.finapple.finapple`, rótulo
 "Finapple". Conferido no manifesto: **sem `INTERNET`** (só `ACCESS_NETWORK_STATE`, do Flutter) e
-`allowBackup=false`. **Ainda não foi aberto num aparelho** — a conferir: botão voltar do Android, pesos das
+`allowBackup=false`. **Aberto num Xiaomi M2102K1G em 2026-10-07**: a 1ª versão abria e fechava na hora porque `src/main.py` só importava `main` e nunca chamava `ft.run` (no aparelho o Python roda esse arquivo uma vez; o `ft.run` precisa estar nele, sem `if __name__`); corrigido, o app abre e fica de pé. A conferir: botão voltar do Android, pesos das
 fontes variáveis e o app sem internet. O tema claro fica para depois (decisão do usuário). O desenvolvimento
 segue no Windows (`python src/app_fi/main.py`); o app deve continuar multiplataforma. **Armadilha do build:**
 o Flutter precisa do `git` no PATH — num terminal sem ele o `flet build` falha com "Unable to determine
