@@ -3,6 +3,7 @@
 ## Não lançado (desenvolvimento pós-v1.0.0, a partir de 2026-10-07)
 
 ### Android
+- **Ícone do app** com o logo (`src/assets/icon.png`, 1024x1024, traço mais grosso para ler bem pequeno): o `flet build` gera os ícones do Android a partir dele. Fundo do ícone adaptativo e da tela de abertura em grafite `#1A2227` (`[tool.flet.android]` e `[tool.flet.splash]` no `pyproject.toml`; o padrão é branco, que deixaria uma borda branca em volta do logo e um clarão ao abrir).
 - **Botão voltar em Investimentos:** fechava o app porque `ui/home.py` chamava as próprias `montar_hub`/`montar_investimentos` (não registradas), e a "tela atual" do voltar ficava no hub. Agora a navegação passa por `ir_hub`/`ir_investimentos` (os nomes registrados em `main.py`); um teste impede a regressão. Conferido no aparelho: Investimentos volta ao hub e o hub fecha o app.
 - **Correção:** o APK abria e fechava na hora (o launcher `src/main.py` não chamava `ft.run`). Agora chama; testado num Xiaomi M2102K1G via `adb install` — a Home abre normalmente, com logo e fontes.
 - APK reconstruído em 2026-10-07 com todas as mudanças acima (54,5 MB, sem permissão de internet, sem backup automático). Ainda a testar num aparelho; tema claro adiado.

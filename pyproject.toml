@@ -31,6 +31,14 @@ dev = [
 # imports quebrariam em runtime. src/main.py é só um launcher fino pro build.
 path = "src"
 
+[tool.flet.android]
+# Ícone adaptativo e abertura no grafite da marca (o padrão é branco: apareceria uma borda
+# branca em volta do logo e um clarão ao abrir o app no tema escuro).
+adaptive_icon_background = "#1A2227"
+
+[tool.flet.splash]
+color = "#1A2227"
+dark_color = "#1A2227"
 [tool.flet.android.permission]
 # O app é 100% local e o Flet em produção usa uma ponte em-processo (sem TCP/UDS),
 # então a permissão INTERNET que ele adiciona por padrão não é necessária. Sem ela o

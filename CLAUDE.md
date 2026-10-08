@@ -170,7 +170,7 @@ data, logo novo, fontes variáveis) — `build/apk/finapple.apk`, ~54,5 MB, `com
 "Finapple". Conferido no manifesto: **sem `INTERNET`** (só `ACCESS_NETWORK_STATE`, do Flutter) e
 `allowBackup=false`. **Aberto num Xiaomi M2102K1G em 2026-10-07**: a 1ª versão abria e fechava na hora porque `src/main.py` só importava `main` e nunca chamava `ft.run` (no aparelho o Python roda esse arquivo uma vez; o `ft.run` precisa estar nele, sem `if __name__`); corrigido, o app abre e fica de pé. A conferir: botão voltar do Android, pesos das
 fontes variáveis e o app sem internet. O tema claro fica para depois (decisão do usuário). O desenvolvimento
-segue no Windows (`python src/app_fi/main.py`); o app deve continuar multiplataforma. **Armadilha do build:**
+segue no Windows (`python src/app_fi/main.py`); o app deve continuar multiplataforma. **Ícone:** `src/assets/icon.png` (1024x1024, gerado do logo; o `flet build` cria os ícones e o adaptativo, fundo `#1A2227` no `pyproject.toml`). Para refazer: renderizar `logo_finapple.svg` em 1024x1024 sobre `#1A2227` (traço ~1,3x mais grosso). **Armadilha do build:**
 o Flutter precisa do `git` no PATH — num terminal sem ele o `flet build` falha com "Unable to determine
 engine version"; use `$env:Path = 'C:\Program Files\Git\cmd;' + $env:Path`.
 **Primeiro `flet build apk` de teste rodado com sucesso em 2026-09-23** (APK em
