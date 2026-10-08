@@ -3,6 +3,7 @@
 ## Não lançado (desenvolvimento pós-v1.0.0, a partir de 2026-10-07)
 
 ### Android
+- **Botão voltar em Investimentos:** fechava o app porque `ui/home.py` chamava as próprias `montar_hub`/`montar_investimentos` (não registradas), e a "tela atual" do voltar ficava no hub. Agora a navegação passa por `ir_hub`/`ir_investimentos` (os nomes registrados em `main.py`); um teste impede a regressão. Conferido no aparelho: Investimentos volta ao hub e o hub fecha o app.
 - **Correção:** o APK abria e fechava na hora (o launcher `src/main.py` não chamava `ft.run`). Agora chama; testado num Xiaomi M2102K1G via `adb install` — a Home abre normalmente, com logo e fontes.
 - APK reconstruído em 2026-10-07 com todas as mudanças acima (54,5 MB, sem permissão de internet, sem backup automático). Ainda a testar num aparelho; tema claro adiado.
 

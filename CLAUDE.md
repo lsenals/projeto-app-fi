@@ -119,7 +119,7 @@ cada módulo tem seta de volta; o menu lateral (Categorias, Recorrentes, Configu
 **Botão voltar do Android:** o app tem uma tela raiz só, então ele fechava o app. Agora cada tela se
 registra em `main.py` (`_registrando_tela`) e a raiz fica com `can_pop=False` fora do hub; o evento
 `on_confirm_pop` leva à tela pai definida em `ui/navegacao.py` (testado em `tests/test_navegacao.py`).
-Tela nova ⇒ registrar o nome em `PAI_DA_TELA` **e** em `_registrando_tela` (um teste confere os dois) e dar
+Navegação entre telas sempre pelos nomes registrados em `main.py` (callbacks `ir_*`), nunca pelas funções locais de um módulo `ui/` — senão o voltar do Android não sabe em que tela está (bug de Investimentos). Tela nova ⇒ registrar o nome em `PAI_DA_TELA` **e** em `_registrando_tela` (um teste confere os dois) e dar
 ao + a cor da regra acima.
 "Finanças pessoais" é a antiga Home (`montar_home` em `main.py`); Lançar abre pelo botão + dela.
 **Regra do botão +:** **todo** FAB de criar (Finanças pessoais, Categorias, Recorrentes, Cripto, Ações, Renda

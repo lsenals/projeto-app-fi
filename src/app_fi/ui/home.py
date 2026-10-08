@@ -83,8 +83,14 @@ def criar_home(
     page: ft.Page, conn: sqlite3.Connection, body: ft.Column, *,
     abrir_menu: Callable, ir_financas: Callable[[], None], ir_objetivos: Callable[[], None],
     ir_cripto: Callable[[], None], ir_acoes: Callable[[], None], ir_renda_fixa: Callable[[], None],
+    ir_hub: Callable[[], None], ir_investimentos: Callable[[], None],
 ) -> tuple[Callable[[], None], Callable[[], None]]:
-    """Devolve `(montar_hub, montar_investimentos)`."""
+    """Devolve `(montar_hub, montar_investimentos)`.
+
+    A navegação entre o hub e Investimentos passa por `ir_hub`/`ir_investimentos` (os nomes já
+    registrados em `main.py`), nunca pelas funções locais: chamar a local não atualiza a tela atual
+    do botão voltar do Android e ele fecha o app em vez de voltar.
+    """
 
     def montar_hub() -> None:
         page.appbar = ft.AppBar(leading=ft.IconButton(icon=ft.Icons.MENU, on_click=abrir_menu))
@@ -106,7 +112,7 @@ def criar_home(
                        lambda e: ir_financas()),
                 _linha(ft.Icons.TRENDING_UP_ROUNDED, "Investimentos",
                        "Cripto, renda fixa e ações",
-                       lambda e: montar_investimentos()),
+                       lambda e: ir_investimentos()),
                 _linha(ft.Icons.EMOJI_EVENTS_ROUNDED, "Objetivos", "Metas e conquistas",
                        lambda e: ir_objetivos()),
             ]),
@@ -118,7 +124,7 @@ def criar_home(
 
     def montar_investimentos() -> None:
         page.appbar = ft.AppBar(
-            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: montar_hub()),
+            leading=ft.IconButton(icon=ft.Icons.ARROW_BACK, on_click=lambda e: ir_hub()),
             title=ft.Text("Investimentos", font_family=cores.FONTE_TITULO, weight=ft.FontWeight.W_600),
         )
         page.floating_action_button = None

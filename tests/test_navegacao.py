@@ -1,4 +1,4 @@
-﻿import re
+import re
 from pathlib import Path
 
 import pytest
@@ -45,3 +45,10 @@ def test_main_registra_todas_as_telas_do_mapa():
     # cada nome do mapa precisa ser registrado em main.py (senão o voltar dessa tela cai no hub sem querer)
     registradas = set(re.findall(r'_registrando_tela\("(\w+)"', MAIN.read_text(encoding="utf-8")))
     assert registradas == set(PAI_DA_TELA)
+
+def test_home_navega_por_callbacks_registrados_e_nao_pelas_funcoes_locais():
+    """O botão voltar do Android usa a "tela atual" gravada pelos montar_* registrados em main.py.
+    Se home.py chamar as suas próprias montar_hub/montar_investimentos, a tela atual não muda e o
+    voltar fecha o app (bug visto no aparelho em Investimentos)."""
+    home = (MAIN.parent / "ui" / "home.py").read_text(encoding="utf-8")
+    assert not re.search(r"lambda e: montar_(hub|investimentos)\(\)", home)

@@ -255,6 +255,7 @@ def main(page: ft.Page) -> None:
         page, conn, body, abrir_menu=abrir_menu, ir_financas=lambda: montar_home(),
         ir_objetivos=lambda: montar_objetivos(), ir_cripto=lambda: montar_cripto(),
         ir_acoes=lambda: montar_acoes(), ir_renda_fixa=lambda: montar_renda_fixa(),
+        ir_hub=lambda: montar_hub(), ir_investimentos=lambda: montar_investimentos(),
     )
 
     async def ir_para_categorias(_e) -> None:
